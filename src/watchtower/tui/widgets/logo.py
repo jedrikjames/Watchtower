@@ -42,30 +42,57 @@ def images_available() -> bool:
     return True
 
 
-def terminal_supports_images() -> bool:
-    """True when the terminal can actually draw one.
+#: Result of the one and only probe. None means it has not been run.
+_support: bool | None = None
 
-    textual-image falls back to half-block or Unicode approximations when no
-    graphics protocol is available. Those look considerably worse than our
-    braille at this size, so treat "no protocol" as "no images" rather than
-    silently handing the user something uglier than the default.
+
+def probe_image_support() -> bool:
+    """Ask the terminal whether it can draw images, and remember the answer.
+
+    **This has to run before the Textual app starts.** The probe writes an
+    escape sequence and waits for the terminal to answer on stdin; once Textual
+    is running its own input thread grabs that answer first, so the query always
+    times out and every terminal looks incapable. textual-image says as much in
+    its own docstring, and calling this from compose() was exactly the mistake.
+
+    Importing textual_image.renderable *is* the probe - it picks a renderer at
+    import time - so the import is deliberately kept in here.
     """
+    global _support
+    if _support is not None:
+        return _support
+
     if not images_available():
-        return False
+        _support = False
+        return _support
+
     try:
-        # textual_image picks a renderer at import time by querying the
-        # terminal, so importing it *is* the probe. It settles on halfcell or
-        # unicode when nothing better is available.
         from textual_image.renderable import Image as Chosen
         from textual_image.renderable.sixel import Image as SixelImage
         from textual_image.renderable.tgp import Image as TGPImage
     except Exception as exc:  # pragma: no cover - depends on the installed version
         log.info("could not probe terminal image support: %s", type(exc).__name__)
-        return False
+        _support = False
+        return _support
 
-    supported = Chosen in (SixelImage, TGPImage)
-    log.info("terminal image support: %s (%s)", supported, Chosen.__module__.rsplit(".", 1)[-1])
-    return supported
+    chosen = Chosen.__module__.rsplit(".", 1)[-1]
+    _support = Chosen in (SixelImage, TGPImage)
+    log.info("terminal image support: %s (renderer: %s)", _support, chosen)
+    return _support
+
+
+def terminal_supports_images() -> bool:
+    """Whether images can be drawn. Never probes - see probe_image_support.
+
+    textual-image falls back to half-block or Unicode approximations when no
+    graphics protocol is available. Those look worse than our braille at this
+    size, so "no protocol" means "no images" rather than silently handing the
+    user something uglier than the default.
+    """
+    if _support is None:
+        log.warning("image support was never probed; falling back to braille")
+        return False
+    return _support
 
 
 def icon_path(provider_id: str) -> Path | None:

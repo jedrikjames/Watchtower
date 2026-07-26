@@ -42,6 +42,7 @@ from .screens import (
     UnlockScreen,
 )
 from .widgets import AccountCard, StatusLine
+from .widgets.logo import probe_image_support
 
 log = get_logger("tui")
 
@@ -86,6 +87,12 @@ class WatchtowerApp(App[None]):
             on_complete=self._on_refresh_complete,
         )
         self._booted = False
+
+        # Has to happen here rather than in compose(): the probe waits for the
+        # terminal to answer on stdin, and once Textual is running its input
+        # thread takes that answer first. __init__ is the last safe moment.
+        if settings.logo_style == "image":
+            probe_image_support()
 
     # -- layout -----------------------------------------------------------
 
