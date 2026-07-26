@@ -81,7 +81,7 @@ class AccountCard(Static):
     def render(self) -> Group:
         account = self.state.account
         provider = get_provider(account.provider)
-        logo = list(provider.info.logo) if provider else ["", "", ""]
+        logo = list(self._logo_for(provider)) if provider else ["", "", ""]
         accent = provider.info.accent if provider else palette().muted
         provider_name = provider.info.display_name if provider else account.provider
 
@@ -115,6 +115,12 @@ class AccountCard(Static):
         lines.append(Text(""))
         lines.append(self._footer(width))
         return Group(*lines)
+
+    def _logo_for(self, provider) -> tuple[str, ...]:
+        """Braille by default; box-drawing where the font cannot manage it."""
+        if self.settings.logo_style == "blocks" and provider.info.logo_blocks:
+            return provider.info.logo_blocks
+        return provider.info.logo
 
     def _title_row(self, label: str, glyph: str, dot_colour: str, width: int) -> Text:
         row = Text(no_wrap=True)

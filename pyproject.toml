@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # distribution is watchtower-tui. The import package and the command are both
 # plain "watchtower".
 name = "watchtower-tui"
-version = "0.1.1"
+version = "0.1.2"
 description = "A small terminal dashboard for the usage limits on your Codex and Claude accounts."
 readme = "README.md"
 license = { file = "LICENSE" }

@@ -22,6 +22,7 @@ MIN_REFRESH_SECONDS = 30
 MAX_REFRESH_SECONDS = 3600
 
 SECRET_BACKENDS = ("auto", "keyring", "file")
+LOGO_STYLES = ("braille", "blocks")
 
 
 def _matches_type(current: Any, value: Any) -> bool:
@@ -67,6 +68,10 @@ class Settings:
     #: Textual theme name.
     theme: str = "textual-dark"
 
+    #: "braille" for the detailed provider marks, "blocks" for the simpler
+    #: box-drawing ones if your terminal font has no braille coverage.
+    logo_style: str = "braille"
+
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
@@ -94,6 +99,9 @@ class Settings:
         self.refresh_seconds = max(
             MIN_REFRESH_SECONDS, min(MAX_REFRESH_SECONDS, int(self.refresh_seconds))
         )
+        if self.logo_style not in LOGO_STYLES:
+            log.info("unknown logo_style %r, using braille", self.logo_style)
+            self.logo_style = "braille"
         if self.secret_backend not in SECRET_BACKENDS:
             log.info("unknown secret_backend %r, using auto", self.secret_backend)
             self.secret_backend = "auto"

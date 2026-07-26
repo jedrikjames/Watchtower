@@ -13,6 +13,7 @@ anthropics/claude-code#31637.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ from typing import Any
 from ..auth.oauth import OAuthEndpoints
 from ..errors import UsageUnavailable
 from ..logging_setup import get_logger
+from ..logos import CLAUDE_BLOCKS, CLAUDE_BRAILLE
 from ..models import AuthMethod, Credential, UsageReport, UsageWindow
 from ..timefmt import from_iso, utcnow
 from .base import Identity, ImportCandidate, Provider, ProviderInfo
@@ -39,7 +41,7 @@ PROFILE_URL = "https://api.anthropic.com/api/oauth/profile"
 OAUTH_BETA = "oauth-2025-04-20"
 API_VERSION = "2023-06-01"
 
-LOGO = ("╲ │ ╱", "──╋──", "╱ │ ╲")
+LOGO = CLAUDE_BRAILLE
 
 # Window key -> what we call it on the card. Anything we do not recognise is
 # still shown, with the raw key title-cased, so a new limit type appearing
@@ -62,6 +64,52 @@ PLAN_NAMES = {
     "enterprise": "Enterprise",
     "free": "Free",
 }
+
+#: Values that describe *how* an account is paid for rather than *what* it has.
+#: billing_type is "stripe_subscription" for anything bought with a card, on
+#: Pro and on Max alike, so showing it as the plan tells the user nothing.
+BILLING_MECHANISMS = {
+    "stripe_subscription",
+    "stripe",
+    "invoice",
+    "manual",
+    "credit_card",
+    "prepaid",
+    "unknown",
+}
+
+#: Prefixes Anthropic puts on tier identifiers, e.g. "default_claude_max_20x".
+TIER_PREFIXES = ("default_", "claude_", "anthropic_")
+
+
+def _normalise_tier(raw: Any) -> str:
+    """Turn a tier identifier into something worth putting on a card.
+
+    "default_claude_max_20x" -> "Max 20x", "pro" -> "Pro". Returns "" for
+    anything that is a billing mechanism rather than a tier.
+    """
+    if isinstance(raw, dict):
+        raw = raw.get("type") or raw.get("name") or raw.get("tier") or ""
+    text = str(raw or "").strip().lower()
+    if not text:
+        return ""
+
+    changed = True
+    while changed:
+        changed = False
+        for prefix in TIER_PREFIXES:
+            if text.startswith(prefix):
+                text = text[len(prefix) :]
+                changed = True
+
+    if not text or text in BILLING_MECHANISMS:
+        return ""
+    if text in PLAN_NAMES:
+        return PLAN_NAMES[text]
+
+    # Title-casing turns "max_20x" into "Max 20X"; put the multiplier back.
+    pretty = text.replace("_", " ").title()
+    return re.sub(r"(\d+)X\b", r"\1x", pretty)
 
 
 def _as_percent(value: Any) -> float | None:
@@ -89,6 +137,7 @@ class ClaudeProvider(Provider):
         display_name="Claude",
         accent="#d97757",
         logo=LOGO,
+        logo_blocks=CLAUDE_BLOCKS,
         signin_label="Sign in with Claude",
         docs_url="https://claude.ai",
     )
@@ -180,12 +229,36 @@ class ClaudeProvider(Provider):
 
     @staticmethod
     def _plan_name(raw: Any) -> str:
-        if isinstance(raw, dict):
-            raw = raw.get("type") or raw.get("name") or ""
-        text = str(raw or "").strip()
-        if not text:
-            return ""
-        return PLAN_NAMES.get(text.lower(), text.replace("_", " ").title())
+        return _normalise_tier(raw)
+
+    @classmethod
+    def _tier_from_profile(cls, account: dict, organization: dict) -> str:
+        """Work out the actual subscription tier.
+
+        Tried most specific first. billing_type is deliberately last and
+        filtered, because it says how the account pays rather than what it
+        bought - it is "stripe_subscription" on Pro and on Max alike.
+        """
+        for candidate in (
+            organization.get("rate_limit_tier"),
+            account.get("rate_limit_tier"),
+            account.get("subscription_type"),
+            organization.get("subscription_type"),
+            organization.get("organization_type"),
+            account.get("plan"),
+            organization.get("plan"),
+        ):
+            tier = _normalise_tier(candidate)
+            if tier:
+                return tier
+
+        # Older profiles only carry booleans.
+        if account.get("has_claude_max") or organization.get("has_claude_max"):
+            return "Max"
+        if account.get("has_claude_pro") or organization.get("has_claude_pro"):
+            return "Pro"
+
+        return _normalise_tier(organization.get("billing_type"))
 
     # -- identity ---------------------------------------------------------
 
@@ -209,13 +282,19 @@ class ClaudeProvider(Provider):
             payload.get("organization") if isinstance(payload.get("organization"), dict) else {}
         )
 
-        email = str(account.get("email_address") or account.get("email") or "")
-        plan = self._plan_name(
-            organization.get("billing_type")
-            or organization.get("subscription_type")
-            or account.get("subscription_type")
-            or ""
+        # Field names only, never values. Which key carries the tier has moved
+        # before, and this is the difference between a five minute fix and a
+        # guessing game when it moves again.
+        log.info(
+            "claude profile fields: account=%s organization=%s",
+            sorted(account),
+            sorted(organization),
         )
+
+        email = str(account.get("email_address") or account.get("email") or "")
+        plan = self._tier_from_profile(account, organization)
+        if not plan:
+            log.info("no recognisable subscription tier in the profile")
         label = str(organization.get("name") or account.get("full_name") or email or "Claude")
         return Identity(
             label=label,

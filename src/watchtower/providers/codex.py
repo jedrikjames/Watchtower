@@ -21,6 +21,7 @@ from typing import Any
 from ..auth.oauth import OAuthEndpoints, decode_jwt_claims
 from ..errors import UsageUnavailable
 from ..logging_setup import get_logger
+from ..logos import OPENAI_BLOCKS, OPENAI_BRAILLE
 from ..models import AuthMethod, Credential, UsageReport, UsageWindow
 from ..timefmt import from_iso, utcnow
 from .base import Identity, ImportCandidate, Provider, ProviderInfo
@@ -39,7 +40,7 @@ USAGE_URL = "https://chatgpt.com/backend-api/codex/usage"
 #: Where the id_token hides the ChatGPT-specific claims.
 AUTH_CLAIM_NAMESPACE = "https://api.openai.com/auth"
 
-LOGO = ("╱▔▔▔╲", "▏ ╳ ▕", "╲▁▁▁╱")
+LOGO = OPENAI_BRAILLE
 
 PLAN_NAMES = {
     "free": "Free",
@@ -82,6 +83,7 @@ class CodexProvider(Provider):
         display_name="Codex",
         accent="#10a37f",
         logo=LOGO,
+        logo_blocks=OPENAI_BLOCKS,
         signin_label="Sign in with ChatGPT",
         docs_url="https://developers.openai.com/codex",
     )
@@ -104,9 +106,15 @@ class CodexProvider(Provider):
 
     @staticmethod
     def _headers(credential: Credential) -> dict[str, str]:
-        headers = {"Authorization": f"Bearer {credential.bearer}"}
-        # The backend needs to know which ChatGPT workspace we are asking about
-        # when the account belongs to more than one.
+        headers = {
+            "Authorization": f"Bearer {credential.bearer}",
+            # The ChatGPT backend rejects callers it does not recognise, so
+            # identify ourselves the way its own CLI does.
+            "originator": "codex_cli_rs",
+        }
+        # It also needs to know which workspace we are asking about when the
+        # account belongs to more than one. Without this the request is refused
+        # with a 401 that looks exactly like a dead token.
         if credential.account_hint:
             headers["chatgpt-account-id"] = credential.account_hint
         return headers

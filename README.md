@@ -14,9 +14,9 @@ screen, one card per account, a bar each, refreshed every minute.
   Watchtower  2 accounts                                              ● updated 12s ago · next in 48s
 
   ╭───────────────────────────────────────────────╮  ╭───────────────────────────────────────────────╮
-  │  ╲ │ ╱   Personal                          ●  │  │  ╱▔▔▔╲   Work                              ●  │
-  │  ──╋──   Claude · Max 20x                     │  │  ▏ ╳ ▕   Codex · Pro                          │
-  │  ╱ │ ╲   me@example.com                       │  │  ╲▁▁▁╱   work@example.com                     │
+  │  ⠢⡀⣿⢀⠔   Personal                          ●  │  │  ⡠⢊⠭⡑⢄   Work                              ●  │
+  │  ⠶⢎⣿⡱⠶   Claude · Max 20x                     │  │  ⡇⢇⠀⡸⢸   Codex · Pro                          │
+  │  ⠔⠁⣿⠈⠢   me@example.com                       │  │  ⠈⠢⠭⠔⠁   work@example.com                     │
   │                                               │  │                                               │
   │  5-hour   █████████████████████████░░░  91%   │  │  5-hour   ████████████░░░░░░░░░░░░░░░░  42%   │
   │  Weekly   █████████████░░░░░░░░░░░░░░░  46%   │  │  Weekly   ██████░░░░░░░░░░░░░░░░░░░░░░  21%   │
@@ -31,6 +31,11 @@ screen, one card per account, a bar each, refreshed every minute.
 Sign-in is the same browser flow the official CLIs use. Tokens go into your
 system keychain, or an encrypted file if the machine has not got one. Nothing
 leaves your computer except the calls to the providers themselves.
+
+The provider marks are the Bootstrap Icons `openai` and `claude` glyphs traced
+onto a braille dot grid — a terminal cannot draw an SVG, but braille gives 2x4
+dots per cell, which is enough for the shapes to survive. If your font has no
+braille coverage, set `logo_style = "blocks"` for box-drawing versions.
 
 ## Install
 
@@ -95,6 +100,7 @@ There are a few subcommands for when a TUI is the wrong shape:
 ```bash
 watchtower where       # print the data directory and what is in it
 watchtower accounts    # list accounts, one per line
+watchtower doctor      # check the install and report what it found
 watchtower reset       # delete everything local, after asking twice
 ```
 
@@ -181,6 +187,7 @@ refusing to start.
 | `confirm_remove` | `true` | |
 | `open_browser` | `true` | turn off on headless machines and copy the URL |
 | `theme` | `textual-dark` | any Textual theme name |
+| `logo_style` | `braille` | `blocks` for terminals whose font lacks braille |
 
 ## Development
 

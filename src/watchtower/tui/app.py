@@ -241,8 +241,14 @@ class WatchtowerApp(App[None]):
         await self._sync_cards()
 
     def _tick(self) -> None:
-        """Once a second: keep the relative times honest."""
+        """Once a second: keep the relative times honest.
+
+        Values are pulled from the scheduler on every tick rather than cached
+        from the last refresh, so the countdown cannot drift out of step with
+        the loop that actually owns it.
+        """
         try:
+            self._update_status()
             self.query_one(StatusLine).tick()
         except Exception:  # pragma: no cover - during teardown
             return

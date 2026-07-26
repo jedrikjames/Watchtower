@@ -422,7 +422,7 @@ class AccountManager:
                 credential = await provider.refresh_credential(credential)
                 self.save_credential(account.id, credential)
 
-            report = await provider.fetch_usage(credential)
+            report = await self._fetch_usage_verifying_auth(provider, account.id, credential)
 
         except VaultLocked:
             state.status = AccountStatus.ERROR
@@ -483,6 +483,46 @@ class AccountManager:
 
         self._persist_cache()
         return state
+
+    async def _fetch_usage_verifying_auth(self, provider, account_id: str, credential: Credential):
+        """Fetch usage, but do not take a 401 at face value.
+
+        These usage endpoints are undocumented and at least one of them answers
+        401/403 for reasons that have nothing to do with the credential being
+        dead. Telling somebody to sign in again when their sign-in is perfectly
+        good sends them round a loop that cannot help, so the claim gets
+        checked: refresh the token and try once more. If the refresh works and
+        usage is still refused, the credential is fine and the endpoint is the
+        problem - report that instead.
+        """
+        try:
+            return await provider.fetch_usage(credential)
+        except ReauthRequired:
+            pass
+
+        log.info("usage endpoint refused %s; checking if the credential is really dead", account_id)
+        try:
+            refreshed = await provider.refresh_credential(credential)
+        except Exception:
+            # Could not renew the token, so we cannot show the 401 was the
+            # endpoint's fault. Assume the credential really is dead, which is
+            # the conservative answer and what the user can actually act on.
+            raise ReauthRequired(
+                "token refresh failed after a usage 401",
+                friendly="This account's sign-in has expired. Press R to sign in again.",
+            ) from None
+
+        self.save_credential(account_id, refreshed)
+        try:
+            return await provider.fetch_usage(refreshed)
+        except ReauthRequired as exc:
+            raise UsageUnavailable(
+                f"usage endpoint refused a freshly refreshed token: {exc}",
+                friendly=(
+                    "Signed in fine, but the provider would not return usage figures. "
+                    "This usually means they changed the endpoint."
+                ),
+            ) from exc
 
     @staticmethod
     def _backoff(failures: int) -> int:

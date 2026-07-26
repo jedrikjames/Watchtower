@@ -46,6 +46,7 @@ class RefreshScheduler:
         self._in_flight = False
         self._last_run = None
         self._next_run = None
+        self._next_delay: float | None = None
 
     # -- observable state -------------------------------------------------
 
@@ -116,16 +117,25 @@ class RefreshScheduler:
         finally:
             self._in_flight = False
             self._last_run = utcnow()
+            # Work out when the next pass is due *before* telling anyone this
+            # one finished. on_complete is what makes the UI read next_run, and
+            # if the sleep set it afterwards the dashboard would always be
+            # looking at the previous cycle's deadline - which has just passed,
+            # so it rendered a permanent "next in now".
+            self._next_delay = self._pick_delay()
+            self._next_run = self._last_run + timedelta(seconds=self._next_delay)
 
         if self._on_complete is not None:
             result = self._on_complete(updated)
             if asyncio.iscoroutine(result):
                 await result
 
-    async def _sleep_until_next(self) -> None:
+    def _pick_delay(self) -> float:
         base = max(5, int(self._manager.settings.refresh_seconds))
-        delay = base * (1 + random.uniform(-JITTER, JITTER))
-        self._next_run = utcnow() + timedelta(seconds=delay)
+        return base * (1 + random.uniform(-JITTER, JITTER))
+
+    async def _sleep_until_next(self) -> None:
+        delay = self._next_delay if self._next_delay is not None else self._pick_delay()
         self._wake.clear()
         try:
             await asyncio.wait_for(self._wake.wait(), timeout=delay)

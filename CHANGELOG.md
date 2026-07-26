@@ -5,6 +5,43 @@ loosely and [semver](https://semver.org/) properly.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-26
+
+### Fixed
+- **Claude cards showed "Stripe Subscription" instead of the plan.** The
+  profile's `billing_type` was first in the fallback chain, but it describes
+  how the account is paid for, not what it bought — it reads
+  `stripe_subscription` on Pro and on Max alike. The tier is now resolved from
+  `rate_limit_tier`, `subscription_type` and the `has_claude_*` flags, with
+  billing mechanisms filtered out entirely. A blank plan is shown rather than
+  a wrong one.
+- **The status line always read "next in now".** The scheduler set the next
+  deadline in its sleep step, which runs *after* the completion callback the UI
+  listens to, so the dashboard was always reading the previous cycle's
+  deadline — already in the past. It is computed before the callback fires now,
+  and the status line re-reads it every second.
+- **Codex reported "This account's sign-in is no longer accepted" for a
+  perfectly good sign-in.** A 401 from an undocumented usage endpoint was taken
+  as proof the credential was dead. The claim is now checked: the token is
+  refreshed and the call retried, and only a failed refresh counts as expired.
+  If the refresh works and usage is still refused, the card says the provider
+  would not return figures, which is what actually happened.
+- Codex sends the `originator` header its own CLI uses, which the ChatGPT
+  backend appears to want.
+
+### Changed
+- Provider marks are now the Bootstrap Icons `openai` and `claude` glyphs
+  traced onto a braille dot grid. Braille packs 2x4 dots into a cell, so the
+  same five-by-three space carries eight times the detail of box-drawing
+  characters. Set `logo_style = "blocks"` for the old marks if your terminal
+  font has no braille coverage.
+- New `watchtower doctor` subcommand: reports the data directory, the secret
+  backend actually in use, whether the stylesheet loaded and which providers
+  are registered. Mostly for diagnosing a packaged build.
+- The Claude adapter logs the *field names* returned by the profile endpoint
+  (never the values) at INFO, so a tier field moving again is a five minute fix
+  rather than guesswork.
+
 ## [0.1.1] - 2026-07-26
 
 ### Fixed
@@ -70,6 +107,7 @@ painfully. All were found and fixed before this release.
   `__main__.py` cannot be used as the entry point; the relative import fails.
   There is a separate launcher in `packaging/entry.py`.
 
-[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.2
 [0.1.1]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.1
 [0.1.0]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.0

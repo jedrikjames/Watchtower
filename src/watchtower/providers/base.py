@@ -31,10 +31,12 @@ class ProviderInfo:
     display_name: str
     #: Card accent, used for the logo and the usage bar.
     accent: str
-    #: Small block-art mark drawn on the card. Three lines, six columns.
+    #: Mark drawn on the card: three lines of five cells, braille by default.
     logo: tuple[str, ...]
     #: What the "sign in" button should say.
     signin_label: str
+    #: Box-drawing fallback for terminals whose font lacks braille.
+    logo_blocks: tuple[str, ...] = ()
     docs_url: str = ""
     api_key_label: str = "API key"
     api_key_hint: str = ""
