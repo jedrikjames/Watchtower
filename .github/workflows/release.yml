@@ -23,7 +23,7 @@ jobs:
 
       - name: Install
         run: |
-          pip install -e ".[dev]"
+          pip install -e ".[dev,images]"
           pip install pyinstaller
 
       - name: Test before shipping
