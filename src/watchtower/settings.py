@@ -22,7 +22,10 @@ MIN_REFRESH_SECONDS = 30
 MAX_REFRESH_SECONDS = 3600
 
 SECRET_BACKENDS = ("auto", "keyring", "file")
-LOGO_STYLES = ("braille", "blocks", "image")
+LOGO_STYLES = ("image", "dots")
+
+#: Old names, mapped rather than rejected so an existing config keeps working.
+LEGACY_LOGO_STYLES = {"braille": "dots", "blocks": "dots"}
 
 
 def _matches_type(current: Any, value: Any) -> bool:
@@ -69,10 +72,9 @@ class Settings:
     theme: str = "textual-dark"
 
     #: How to draw the provider marks. "image" draws the real icons on
-    #: terminals with Sixel or Kitty graphics and quietly falls back to
-    #: braille everywhere else, so it is the default and costs nothing when
-    #: unsupported. "braille" forces the dot-grid trace; "blocks" is the
-    #: plainer box-drawing version for fonts with no braille coverage.
+    #: terminals with Sixel or Kitty graphics and falls back to dots
+    #: everywhere else, so it costs nothing where it cannot be drawn.
+    #: "dots" forces the braille trace.
     logo_style: str = "image"
 
     def to_dict(self) -> dict[str, Any]:
@@ -102,9 +104,10 @@ class Settings:
         self.refresh_seconds = max(
             MIN_REFRESH_SECONDS, min(MAX_REFRESH_SECONDS, int(self.refresh_seconds))
         )
+        self.logo_style = LEGACY_LOGO_STYLES.get(self.logo_style, self.logo_style)
         if self.logo_style not in LOGO_STYLES:
-            log.info("unknown logo_style %r, using braille", self.logo_style)
-            self.logo_style = "braille"
+            log.info("unknown logo_style %r, using image", self.logo_style)
+            self.logo_style = "image"
         if self.secret_backend not in SECRET_BACKENDS:
             log.info("unknown secret_backend %r, using auto", self.secret_backend)
             self.secret_backend = "auto"

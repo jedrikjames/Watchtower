@@ -2,15 +2,14 @@
 
 Two reasons it is not just part of the card's render():
 
-* Graphics protocols hate being repainted. The card redraws every second to
-  keep "updated 12s ago" honest, and re-emitting a Sixel or Kitty image that
-  often is exactly the case textual-image warns flickers. As a separate widget
-  it is drawn once and left alone.
-* It keeps the three ways of drawing a mark - image, braille, box-drawing - in
-  one place instead of branching inside the card layout.
+* Graphics protocols hate being repainted, and re-emitting a Sixel or Kitty
+  image whenever the card body changes is exactly the case textual-image warns
+  flickers. As a separate widget the mark is drawn once and left alone.
+* It keeps both ways of drawing a mark - real icon and dot grid - in one
+  place instead of branching inside the card layout.
 
 Image support is optional. `pip install watchtower-tui[images]` pulls in
-Pillow and textual-image; without them this quietly falls back to braille,
+Pillow and textual-image; without them this quietly falls back to dots,
 which is why every import of them is guarded.
 """
 
@@ -85,12 +84,12 @@ def terminal_supports_images() -> bool:
     """Whether images can be drawn. Never probes - see probe_image_support.
 
     textual-image falls back to half-block or Unicode approximations when no
-    graphics protocol is available. Those look worse than our braille at this
+    graphics protocol is available. Those look worse than our dot marks at this
     size, so "no protocol" means "no images" rather than silently handing the
     user something uglier than the default.
     """
     if _support is None:
-        log.warning("image support was never probed; falling back to braille")
+        log.warning("image support was never probed; falling back to dots")
         return False
     return _support
 
@@ -128,7 +127,7 @@ _ICON_NAMES = {"codex": "openai", "claude": "claude"}
 
 
 class TextLogo(Static):
-    """Braille or box-drawing mark. Renders once and never changes."""
+    """The dot-grid mark. Renders once and never changes."""
 
     def __init__(self, lines: tuple[str, ...], colour: str, **kw) -> None:
         text = Text("\n".join(lines), style=colour, no_wrap=True)
@@ -139,8 +138,8 @@ class TextLogo(Static):
 def build_logo(provider, style: str, colour: str) -> Widget:
     """Pick the best mark this machine can actually draw.
 
-    Falls back down the chain image -> braille -> blocks rather than failing,
-    because a card without a logo is still a useful card.
+    Falls back from image to dots rather than failing, because a card without
+    a logo is still a useful card.
     """
     if style == "image":
         path = icon_path(provider.info.id)
@@ -155,12 +154,10 @@ def build_logo(provider, style: str, colour: str) -> Widget:
                 widget.styles.width = logo_slot_width("image")
                 return widget
             except Exception as exc:
-                log.info("image logo unavailable, using braille: %s", type(exc).__name__)
+                log.info("image logo unavailable, using dots: %s", type(exc).__name__)
         elif path is None:
-            log.info("no icon asset for %s, using braille", provider.info.id)
+            log.info("no icon asset for %s, using dots", provider.info.id)
         else:
-            log.info("terminal has no graphics protocol, using braille")
+            log.info("terminal has no graphics protocol, using dots")
 
-    if style == "blocks" and provider.info.logo_blocks:
-        return TextLogo(provider.info.logo_blocks, colour)
     return TextLogo(provider.info.logo, colour)

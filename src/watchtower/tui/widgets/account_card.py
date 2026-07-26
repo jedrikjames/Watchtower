@@ -28,9 +28,9 @@ from textual.widgets import Static
 from ...models import AccountState, AccountStatus
 from ...providers import get_provider
 from ...settings import Settings
-from ...timefmt import ago, until
+from ...timefmt import until
 from ..render import bar, palette, percent_text, status_look, truncate, usage_colour
-from .logo import build_logo, logo_slot_width
+from .logo import LOGO_WIDTH, TextLogo, build_logo, logo_slot_width
 
 GUTTER = "   "
 LABEL_WIDTH = 8
@@ -63,14 +63,25 @@ class AccountCard(Container):
         self.state = state
         self.settings = settings
         self.identity = identity
-        self.logo_width = logo_slot_width(settings.logo_style)
+        self.logo_width = LOGO_WIDTH
         self.add_class("account-card")
 
     def compose(self):
         provider = get_provider(self.state.account.provider)
+        mark = None
         if provider is not None:
-            colour = provider.info.accent
-            yield build_logo(provider, self.settings.logo_style, colour)
+            mark = build_logo(provider, self.settings.logo_style, provider.info.accent)
+            yield mark
+
+        # Indent by what was actually built, not by what was asked for. An
+        # image mark is wider than a dot mark, and build_logo falls back to
+        # dots whenever the terminal cannot draw one - assuming the requested
+        # style here left a stray column of padding on the fallback.
+        self.logo_width = (
+            logo_slot_width("image")
+            if mark is not None and not isinstance(mark, TextLogo)
+            else LOGO_WIDTH
+        )
         yield CardBody(self.state, self.settings, self.identity, self.logo_width)
 
     @property
@@ -218,10 +229,5 @@ class CardBody(Static):
             parts.append("rate limited")
         elif state.status is AccountStatus.STALE:
             parts.append("stale")
-
-        if state.last_success is not None:
-            parts.append(f"updated {ago(state.last_success)}")
-        elif state.account.enabled and state.status is not AccountStatus.NEEDS_AUTH:
-            parts.append("never updated")
 
         return Text(truncate(" · ".join(parts), width), style=palette().muted, no_wrap=True)

@@ -20,12 +20,8 @@ class TestIconAssets:
 class TestFallbacks:
     """Whatever happens, a card gets a mark."""
 
-    def test_braille_is_the_default(self):
-        widget = build_logo(ClaudeProvider(), "braille", "#d97757")
-        assert isinstance(widget, TextLogo)
-
-    def test_blocks_style_uses_the_box_drawing_mark(self):
-        widget = build_logo(CodexProvider(), "blocks", "#10a37f")
+    def test_dots_style_uses_the_text_mark(self):
+        widget = build_logo(ClaudeProvider(), "dots", "#d97757")
         assert isinstance(widget, TextLogo)
 
     def test_image_style_falls_back_when_the_terminal_cannot_draw(self, monkeypatch):
@@ -33,6 +29,17 @@ class TestFallbacks:
         monkeypatch.setattr("watchtower.tui.widgets.logo.terminal_supports_images", lambda: False)
         widget = build_logo(ClaudeProvider(), "image", "#d97757")
         assert isinstance(widget, TextLogo), "must fall back rather than render nothing"
+
+    def test_image_is_the_default_style(self):
+        from watchtower.settings import Settings
+
+        assert Settings().logo_style == "image"
+
+    def test_legacy_style_names_are_migrated_not_rejected(self):
+        from watchtower.settings import Settings
+
+        for old in ("braille", "blocks"):
+            assert Settings.from_dict({"logo_style": old}).logo_style == "dots"
 
     def test_image_style_falls_back_without_the_optional_extra(self, monkeypatch):
         monkeypatch.setattr("watchtower.tui.widgets.logo.images_available", lambda: False)
@@ -64,7 +71,7 @@ class TestStyling:
     """
 
     def test_text_logos_carry_the_styling_hook(self):
-        for style in ("braille", "blocks"):
+        for style in ("dots",):
             widget = build_logo(ClaudeProvider(), style, "#d97757")
             assert widget.has_class("card-logo")
 

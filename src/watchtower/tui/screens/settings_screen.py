@@ -20,8 +20,7 @@ from ...settings import LOGO_STYLES, MAX_REFRESH_SECONDS, MIN_REFRESH_SECONDS, S
 #: Wording for the logo_style choices, so the dropdown is not raw enum values.
 _LOGO_LABELS = {
     "image": "Icons (needs Sixel/Kitty)",
-    "braille": "Braille",
-    "blocks": "Box drawing",
+    "dots": "Dots",
 }
 
 
@@ -108,7 +107,7 @@ class SettingsScreen(ModalScreen[Settings | None]):
                 )
                 yield Static(
                     "  Real icons need a terminal with Sixel or Kitty graphics; "
-                    "anything else falls back to braille on its own.",
+                    "anything else falls back to dots on its own.",
                     classes="settings-note",
                 )
                 yield Static("Where secrets are kept", classes="settings-heading")

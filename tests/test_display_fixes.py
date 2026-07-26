@@ -174,11 +174,6 @@ class TestLogos:
     def test_the_two_marks_are_distinguishable(self):
         assert OPENAI_BRAILLE != CLAUDE_BRAILLE
 
-    def test_block_fallback_is_still_available(self):
-        for provider in (ClaudeProvider(), CodexProvider()):
-            assert len(provider.info.logo_blocks) == 3
-
     def test_logo_style_setting_is_validated(self):
-        bad = Settings.from_dict({"logo_style": "interpretive dance"})
-        assert bad.logo_style == "braille"
-        assert Settings.from_dict({"logo_style": "blocks"}).logo_style == "blocks"
+        assert Settings.from_dict({"logo_style": "interpretive dance"}).logo_style == "image"
+        assert Settings.from_dict({"logo_style": "dots"}).logo_style == "dots"

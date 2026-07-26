@@ -131,6 +131,27 @@ def cmd_doctor() -> int:
         ok = False
         _safe_print(f"  Stylesheet  FAILED - {type(exc).__name__}")
 
+    # -- provider marks. The usual confusion is running one build while
+    # editing another, so report what *this* binary can actually do.
+    try:
+        from .settings import LOGO_STYLES
+        from .settings import load as _load_settings
+        from .tui.widgets.logo import images_available, probe_image_support
+
+        style = _load_settings().logo_style
+        _safe_print(f"  Logo style  {style}  (available: {', '.join(LOGO_STYLES)})")
+        if "image" not in LOGO_STYLES:
+            _safe_print("              this build has no image support")
+        elif not images_available():
+            _safe_print("              image extra missing: pip install watchtower-tui[images]")
+        elif probe_image_support():
+            _safe_print("              terminal graphics: yes, icons will be drawn")
+        else:
+            _safe_print("              terminal graphics: no, falling back to dots")
+    except Exception as exc:
+        ok = False
+        _safe_print(f"  Logo style  FAILED - {type(exc).__name__}")
+
     # -- providers
     try:
         from .providers import all_providers
