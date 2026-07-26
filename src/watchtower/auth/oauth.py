@@ -39,6 +39,14 @@ class OAuthEndpoints:
     token_request_style: str = "form"
     #: Anything else the provider insists on in the authorize URL.
     extra_authorize_params: dict[str, str] = field(default_factory=dict)
+    #: Send ``state`` in the token request as well as the authorize request.
+    #:
+    #: RFC 6749 does not define state as a token endpoint parameter - it
+    #: belongs to the authorization request and comes back on the callback.
+    #: Anthropic's endpoint expects it anyway, and OpenAI's rejects it outright
+    #: with "Unknown parameter: 'state'", so it has to be per provider. Default
+    #: off, because off is what the spec says.
+    send_state_with_code: bool = False
 
 
 @dataclass(slots=True, repr=False)
@@ -150,7 +158,7 @@ class OAuthClient:
             "redirect_uri": redirect_uri,
             "code_verifier": pkce.verifier,
         }
-        if state:
+        if state and self.endpoints.send_state_with_code:
             data["state"] = state
         return await self._token_request(data)
 
@@ -210,31 +218,54 @@ class OAuthClient:
 
     @staticmethod
     def _token_error(response: httpx.Response) -> AuthError:
-        code = ""
-        description = ""
-        try:
-            payload = response.json()
-            if isinstance(payload, dict):
-                code = str(payload.get("error") or "")
-                description = str(payload.get("error_description") or "")
-        except ValueError:
-            pass
+        code, description = OAuthClient._read_error(response)
 
         # Never log the body: a failed refresh response can echo the token back.
         log.warning(
             "token request failed with HTTP %s (%s)", response.status_code, code or "no code"
         )
 
+        # Only codes that actually mean "the stored credential is dead" send the
+        # user round the sign-in loop again. invalid_request means *we* built a
+        # bad request, and telling someone to re-authenticate over a bug in our
+        # own parameters just wastes their time.
         if (
-            code in {"invalid_grant", "expired_token", "invalid_request"}
+            code in {"invalid_grant", "expired_token", "invalid_client"}
             or response.status_code == 401
         ):
             return ReauthRequired(
                 f"token rejected: {code or response.status_code}",
                 friendly="This account's sign-in has expired. Press R on the card to sign in.",
             )
+
         detail = description[:200] or code or f"HTTP {response.status_code}"
         return AuthError(
             f"token request failed: {code or response.status_code}",
             friendly=f"Sign-in failed: {detail}",
         )
+
+    @staticmethod
+    def _read_error(response: httpx.Response) -> tuple[str, str]:
+        """Pull a code and a human sentence out of an error body.
+
+        Two shapes in the wild. RFC 6749 says a flat
+        ``{"error": "...", "error_description": "..."}``; OpenAI nests it as
+        ``{"error": {"message": ..., "code": ..., "type": ...}}``. Reading the
+        nested one as a flat string is how a raw Python dict ends up quoted at
+        the user, so handle both.
+        """
+        try:
+            payload = response.json()
+        except ValueError:
+            return "", ""
+        if not isinstance(payload, dict):
+            return "", ""
+
+        error = payload.get("error")
+        if isinstance(error, dict):
+            code = str(error.get("code") or error.get("type") or "")
+            description = str(error.get("message") or "")
+        else:
+            code = str(error or "")
+            description = str(payload.get("error_description") or "")
+        return code, description

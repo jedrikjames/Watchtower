@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+from dataclasses import replace
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -192,3 +193,78 @@ def test_jwt_claims_are_decoded_without_verification():
 @pytest.mark.parametrize("bad", ["", "not-a-jwt", "a.b", "eyJ.!!!!.c"])
 def test_bad_jwts_return_nothing(bad):
     assert decode_jwt_claims(bad) == {}
+
+
+# -------------------------------------------------- provider quirks (regressions)
+
+
+async def test_state_is_not_sent_to_the_token_endpoint_by_default():
+    """RFC 6749 has no state parameter on the token request.
+
+    OpenAI rejects it outright with "Unknown parameter: 'state'", which broke
+    Sign in with ChatGPT entirely.
+    """
+    async with FakeTokenServer() as server:
+        client = OAuthClient(endpoints(server.url))
+        await client.exchange_code(
+            code="C", pkce=new_pkce(), redirect_uri="http://localhost:1/cb", state="STATE"
+        )
+    assert "state" not in server.requests[0]
+
+
+async def test_state_is_sent_when_a_provider_asks_for_it():
+    """Anthropic's endpoint expects it, so it stays opt-in per provider."""
+    async with FakeTokenServer() as server:
+        quirky = replace(endpoints(server.url, style="json"), send_state_with_code=True)
+        client = OAuthClient(quirky)
+        await client.exchange_code(
+            code="C", pkce=new_pkce(), redirect_uri="http://localhost:1/cb", state="STATE"
+        )
+    assert server.requests[0]["state"] == "STATE"
+
+
+def test_shipping_providers_agree_with_their_endpoints():
+    from watchtower.providers.claude import ClaudeProvider
+    from watchtower.providers.codex import CodexProvider
+
+    assert ClaudeProvider().oauth_endpoints().send_state_with_code is True
+    assert CodexProvider().oauth_endpoints().send_state_with_code is False
+
+
+async def test_nested_error_objects_produce_a_readable_message():
+    """OpenAI nests the error; reading it as a flat string leaked a raw dict."""
+    body = {
+        "error": {
+            "message": "Unknown parameter: 'state'.",
+            "type": "invalid_request_error",
+            "param": "state",
+            "code": "unknown_parameter",
+        }
+    }
+    async with FakeTokenServer(body, status=400) as server:
+        client = OAuthClient(endpoints(server.url))
+        with pytest.raises(AuthError) as caught:
+            await client.exchange_code(code="C", pkce=new_pkce(), redirect_uri="http://x/cb")
+
+    friendly = caught.value.friendly
+    assert friendly == "Sign-in failed: Unknown parameter: 'state'."
+    assert "{" not in friendly and "'type'" not in friendly
+
+
+async def test_flat_rfc_error_bodies_still_work():
+    body = {"error": "invalid_scope", "error_description": "That scope is not allowed."}
+    async with FakeTokenServer(body, status=400) as server:
+        client = OAuthClient(endpoints(server.url))
+        with pytest.raises(AuthError) as caught:
+            await client.exchange_code(code="C", pkce=new_pkce(), redirect_uri="http://x/cb")
+    assert caught.value.friendly == "Sign-in failed: That scope is not allowed."
+
+
+async def test_a_malformed_request_does_not_tell_the_user_to_re_authenticate():
+    """invalid_request is our bug, not a dead credential."""
+    body = {"error": "invalid_request", "error_description": "Bad parameter."}
+    async with FakeTokenServer(body, status=400) as server:
+        client = OAuthClient(endpoints(server.url))
+        with pytest.raises(AuthError) as caught:
+            await client.exchange_code(code="C", pkce=new_pkce(), redirect_uri="http://x/cb")
+    assert not isinstance(caught.value, ReauthRequired)

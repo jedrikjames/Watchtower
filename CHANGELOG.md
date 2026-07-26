@@ -5,6 +5,23 @@ loosely and [semver](https://semver.org/) properly.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-26
+
+### Fixed
+- **Sign in with ChatGPT failed outright.** The token exchange sent `state` in
+  the request body. RFC 6749 does not define `state` as a token endpoint
+  parameter — it belongs to the authorization request and comes back on the
+  callback — and OpenAI rejects it with `Unknown parameter: 'state'`. It is
+  now opt-in per provider and off by default; Anthropic's endpoint does expect
+  it, so Claude keeps sending it.
+- Error bodies with a nested `error` object (OpenAI's shape) were read as if
+  the field were a flat string, so a raw Python dict was quoted back at the
+  user instead of a sentence. Both the RFC shape and the nested one are now
+  handled.
+- `invalid_request` no longer maps to "your sign-in has expired". That code
+  means the request we built was wrong, and sending someone round the
+  re-authentication loop over our own bug wastes their time.
+
 ## [0.1.0] - 2026-07-26
 
 First public release.
@@ -53,5 +70,6 @@ painfully. All were found and fixed before this release.
   `__main__.py` cannot be used as the entry point; the relative import fails.
   There is a separate launcher in `packaging/entry.py`.
 
-[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.1
 [0.1.0]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.0

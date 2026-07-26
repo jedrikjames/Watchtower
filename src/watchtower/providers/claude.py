@@ -104,6 +104,9 @@ class ClaudeProvider(Provider):
             redirect_port=self.env_port("WATCHTOWER_CLAUDE_REDIRECT_PORT", REDIRECT_PORT),
             redirect_path=REDIRECT_PATH,
             token_request_style="json",
+            # Anthropic's token endpoint expects state echoed back, which is
+            # not an RFC 6749 token parameter. Claude Code sends it too.
+            send_state_with_code=True,
         )
 
     # -- headers ---------------------------------------------------------
