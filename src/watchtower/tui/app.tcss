@@ -237,12 +237,12 @@ Select {
     height: 9;
 }
 
-.account-card > TextLogo,
-.account-card > AutoImage,
-.account-card > SixelImage,
-.account-card > TGPImage,
-.account-card > HalfcellImage,
-.account-card > UnicodeImage {
+/* Matched on a class we add ourselves, never on the library's type name.
+   textual-image swaps the concrete class depending on which protocol the
+   terminal speaks - with Sixel active it is literally called "Image" - so a
+   type selector silently matches nothing and the mark loses its size and
+   layer. That is exactly how it ended up invisible. */
+.account-card > .card-logo {
     layer: mark;
     width: 5;
     height: 3;

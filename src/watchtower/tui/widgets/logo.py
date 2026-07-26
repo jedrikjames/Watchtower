@@ -110,6 +110,7 @@ class TextLogo(Static):
     def __init__(self, lines: tuple[str, ...], colour: str, **kw) -> None:
         text = Text("\n".join(lines), style=colour, no_wrap=True)
         super().__init__(text, **kw)
+        self.add_class("card-logo")
 
 
 def build_logo(provider, style: str, colour: str) -> Widget:
@@ -125,7 +126,7 @@ def build_logo(provider, style: str, colour: str) -> Widget:
                 from textual_image.widget import Image
 
                 widget = Image(str(path))
-                widget.add_class("logo-image")
+                widget.add_class("card-logo")
                 return widget
             except Exception as exc:
                 log.info("image logo unavailable, using braille: %s", type(exc).__name__)

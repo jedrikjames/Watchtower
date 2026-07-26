@@ -51,3 +51,29 @@ def test_probing_never_raises():
 
     assert isinstance(terminal_supports_images(), bool)
     assert isinstance(images_available(), bool)
+
+
+class TestStyling:
+    """The mark is styled by a class we own, not by the library's type name.
+
+    textual-image swaps the concrete class depending on which graphics protocol
+    the terminal speaks - with Sixel active it is literally named "Image" - so a
+    CSS type selector matches nothing and the mark silently loses its size and
+    its layer. That is how it ended up invisible on a terminal that supported
+    Sixel perfectly well.
+    """
+
+    def test_text_logos_carry_the_styling_hook(self):
+        for style in ("braille", "blocks"):
+            widget = build_logo(ClaudeProvider(), style, "#d97757")
+            assert widget.has_class("card-logo")
+
+    def test_the_stylesheet_targets_the_class_not_a_type(self):
+        from pathlib import Path
+
+        css = (Path(__file__).parent.parent / "src/watchtower/tui/app.tcss").read_text(
+            encoding="utf-8"
+        )
+        assert ".account-card > .card-logo" in css
+        for guessed in ("AutoImage", "SixelImage", "TGPImage", "HalfcellImage", "UnicodeImage"):
+            assert guessed not in css, f"{guessed} is a library type name and may not match"
