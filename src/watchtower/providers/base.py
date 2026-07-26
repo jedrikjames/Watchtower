@@ -35,8 +35,6 @@ class ProviderInfo:
     logo: tuple[str, ...]
     #: What the "sign in" button should say.
     signin_label: str
-    #: Box-drawing fallback for terminals whose font lacks braille.
-    logo_blocks: tuple[str, ...] = ()
     docs_url: str = ""
     api_key_label: str = "API key"
     api_key_hint: str = ""

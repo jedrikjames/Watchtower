@@ -21,7 +21,7 @@ from typing import Any
 from ..auth.oauth import OAuthEndpoints, decode_jwt_claims
 from ..errors import UsageUnavailable
 from ..logging_setup import get_logger
-from ..logos import OPENAI_BLOCKS, OPENAI_BRAILLE
+from ..logos import OPENAI_BRAILLE
 from ..models import AuthMethod, Credential, UsageReport, UsageWindow
 from ..timefmt import from_iso, utcnow
 from .base import Identity, ImportCandidate, Provider, ProviderInfo
@@ -83,7 +83,6 @@ class CodexProvider(Provider):
         display_name="Codex",
         accent="#10a37f",
         logo=LOGO,
-        logo_blocks=OPENAI_BLOCKS,
         signin_label="Sign in with ChatGPT",
         docs_url="https://developers.openai.com/codex",
     )

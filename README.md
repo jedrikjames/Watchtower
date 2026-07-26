@@ -32,10 +32,11 @@ Sign-in is the same browser flow the official CLIs use. Tokens go into your
 system keychain, or an encrypted file if the machine has not got one. Nothing
 leaves your computer except the calls to the providers themselves.
 
-The provider marks are the Bootstrap Icons `openai` and `claude` glyphs traced
-onto a braille dot grid — a terminal cannot draw an SVG, but braille gives 2x4
-dots per cell, which is enough for the shapes to survive. If your font has no
-braille coverage, set `logo_style = "blocks"` for box-drawing versions.
+The provider marks are the Bootstrap Icons `openai` and `claude` glyphs. On a
+terminal with Sixel or Kitty graphics they are drawn as real images; anywhere
+else they fall back to the same glyphs traced onto a braille dot grid, which
+gives 2x4 dots per cell — enough for the shapes to survive. Real icons need
+`pip install watchtower-tui[images]`.
 
 ## Install
 
@@ -187,7 +188,7 @@ refusing to start.
 | `confirm_remove` | `true` | |
 | `open_browser` | `true` | turn off on headless machines and copy the URL |
 | `theme` | `textual-dark` | any Textual theme name |
-| `logo_style` | `braille` | `blocks` for terminals whose font lacks braille |
+| `logo_style` | `image` | real icons where the terminal has Sixel or Kitty graphics; `dots` forces the braille trace |
 
 ## Development
 

@@ -6,8 +6,7 @@ dots into one cell, so the 5x3 cells a card gives us become a 10x12 bitmap -
 eight times the resolution of box-drawing characters in exactly the same space,
 which is the difference between a recognisable mark and a vague squiggle.
 
-Every modern terminal font covers this block; the fallback below is for the
-ones that do not, and for `logo_style = "blocks"` if you prefer the old look.
+Every modern terminal font covers this block.
 
 Dot numbering within a cell, and the bit each one sets:
 
@@ -93,12 +92,3 @@ CLAUDE_BITMAP = (
 
 OPENAI_BRAILLE = to_braille(OPENAI_BITMAP)
 CLAUDE_BRAILLE = to_braille(CLAUDE_BITMAP)
-
-# Kept for `logo_style = "blocks"`, and as a safety net on terminals whose font
-# has no braille coverage.
-OPENAI_BLOCKS = ("╱▔▔▔╲", "▏ ╳ ▕", "╲▁▁▁╱")
-CLAUDE_BLOCKS = ("╲ │ ╱", "──╋──", "╱ │ ╲")
-
-
-def pick(style: str, braille: tuple[str, ...], blocks: tuple[str, ...]) -> tuple[str, ...]:
-    return blocks if style == "blocks" else braille

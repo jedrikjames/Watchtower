@@ -2,9 +2,18 @@
    Colours come from the active Textual theme so switching themes in
    settings actually changes everything, including the usage bars. */
 
+/* Transparent throughout, so the terminal's own background shows through and
+   Watchtower sits in whatever colour scheme the user already has. Only the
+   modals paint a background, because an overlay has to be readable. */
 Screen {
-    background: $surface;
-    layers: base overlay;
+    background: transparent;
+
+    /* The layer names have to be declared here, not only on the card. Textual
+       resolves a widget's `layer:` against the screen's layer list, and a name
+       it cannot find sorts below everything - which is why the mark kept
+       disappearing behind the card body. Later in the list means drawn on top,
+       so mark sits above body. */
+    layers: body mark;
 }
 
 /* ---------------------------------------------------------------- chrome */
@@ -12,25 +21,33 @@ Screen {
 StatusLine {
     height: 1;
     padding: 0 2;
-    background: $surface;
+    background: transparent;
     color: $foreground;
 }
 
-#topbar {
+/* height includes padding in Textual, so this is one blank row plus one row
+   of hints. "height: 1; padding-top: 1" leaves zero content rows and the
+   widget disappears without complaining. */
+KeyHints {
     height: 2;
+    width: 100%;
     padding-top: 1;
-    background: $surface;
+    background: transparent;
+    text-align: center;
+}
+
+/* 4 rows: a blank one, the status line, a blank one, the key hints. Any
+   shorter and the hints get squeezed to zero height and silently vanish. */
+#topbar {
+    height: 4;
+    padding-top: 1;
+    background: transparent;
 }
 
 #board {
     padding: 1 2;
     height: 1fr;
-    background: $surface;
-}
-
-Footer {
-    background: $surface;
-    color: $text-muted;
+    background: transparent;
 }
 
 /* ----------------------------------------------------------------- cards */
@@ -44,7 +61,7 @@ Footer {
     height: 11;
     padding: 0 2;
     border: round $panel;
-    background: $surface;
+    background: transparent;
     color: $foreground;
 }
 
@@ -215,4 +232,35 @@ OptionList {
 
 Select {
     width: 24;
+}
+
+/* ------------------------------------------------------------------ logos */
+
+/* The mark and the body sit on separate layers. Textual arranges each layer
+   independently, so both start at the card's top-left: the body fills the
+   card, the mark occupies the 5x3 gutter the body leaves blank for it.
+   Keeping them apart is what lets the body repaint every second without
+   touching the mark - which is what stops Sixel and Kitty images flickering. */
+.account-card {
+    layers: body mark;
+}
+
+/* Explicit, not 100%: a percentage would resolve against the card, whose own
+   height would then depend on its children, and the circle collapses the card
+   to the height of the mark. 9 content rows + 2 border rows = the card's 11. */
+.account-card > CardBody {
+    layer: body;
+    width: 100%;
+    height: 9;
+}
+
+/* Matched on a class we add ourselves, never on the library's type name.
+   textual-image swaps the concrete class depending on which protocol the
+   terminal speaks - with Sixel active it is literally called "Image" - so a
+   type selector silently matches nothing and the mark loses its size and
+   layer. That is exactly how it ended up invisible. */
+.account-card > .card-logo {
+    layer: mark;
+    width: 5;   /* image marks override this from the measured cell aspect */
+    height: 3;
 }

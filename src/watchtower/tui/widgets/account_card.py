@@ -21,14 +21,16 @@ from __future__ import annotations
 from rich.console import Group
 from rich.text import Text
 from textual.binding import Binding
+from textual.containers import Container
 from textual.message import Message
 from textual.widgets import Static
 
 from ...models import AccountState, AccountStatus
 from ...providers import get_provider
 from ...settings import Settings
-from ...timefmt import ago, until
+from ...timefmt import until
 from ..render import bar, palette, percent_text, status_look, truncate, usage_colour
+from .logo import LOGO_WIDTH, TextLogo, build_logo, logo_slot_width
 
 GUTTER = "   "
 LABEL_WIDTH = 8
@@ -36,8 +38,14 @@ MAX_WINDOWS = 3
 MIN_BAR = 6
 
 
-class AccountCard(Static):
-    """A focusable card. Pressing enter on it opens the actions menu."""
+class AccountCard(Container):
+    """A focusable card. Pressing enter on it opens the actions menu.
+
+    The mark is a separate child widget rather than part of the body render.
+    The body redraws every second to keep the relative times honest, and
+    re-emitting a Sixel or Kitty image at that rate is the case textual-image
+    warns flickers. Drawn once, left alone.
+    """
 
     can_focus = True
 
@@ -55,7 +63,26 @@ class AccountCard(Static):
         self.state = state
         self.settings = settings
         self.identity = identity
+        self.logo_width = LOGO_WIDTH
         self.add_class("account-card")
+
+    def compose(self):
+        provider = get_provider(self.state.account.provider)
+        mark = None
+        if provider is not None:
+            mark = build_logo(provider, self.settings.logo_style, provider.info.accent)
+            yield mark
+
+        # Indent by what was actually built, not by what was asked for. An
+        # image mark is wider than a dot mark, and build_logo falls back to
+        # dots whenever the terminal cannot draw one - assuming the requested
+        # style here left a stray column of padding on the fallback.
+        self.logo_width = (
+            logo_slot_width("image")
+            if mark is not None and not isinstance(mark, TextLogo)
+            else LOGO_WIDTH
+        )
+        yield CardBody(self.state, self.settings, self.identity, self.logo_width)
 
     @property
     def account_id(self) -> str:
@@ -66,7 +93,13 @@ class AccountCard(Static):
         self.identity = identity
         self.set_class(state.status.is_problem, "-problem")
         self.set_class(not state.account.enabled, "-paused")
-        self.refresh()
+        try:
+            body = self.query_one(CardBody)
+        except Exception:
+            return
+        body.state = state
+        body.identity = identity
+        body.refresh()
 
     # -- interaction -----------------------------------------------------
 
@@ -76,18 +109,31 @@ class AccountCard(Static):
     def action_activate(self) -> None:
         self.post_message(self.Activated(self.account_id))
 
-    # -- drawing ---------------------------------------------------------
+
+class CardBody(Static):
+    """Everything on the card except the mark."""
+
+    def __init__(
+        self,
+        state: AccountState,
+        settings: Settings,
+        identity: str = "",
+        logo_width: int = 5,
+        **kw,
+    ) -> None:
+        super().__init__(**kw)
+        self.state = state
+        self.settings = settings
+        self.identity = identity
+        self.logo_width = logo_width
 
     def render(self) -> Group:
         account = self.state.account
         provider = get_provider(account.provider)
-        logo = list(self._logo_for(provider)) if provider else ["", "", ""]
-        accent = provider.info.accent if provider else palette().muted
         provider_name = provider.info.display_name if provider else account.provider
 
         width = max(28, self.content_size.width or 44)
-        logo_width = max((len(line) for line in logo), default=0)
-        text_width = max(10, width - logo_width - len(GUTTER))
+        text_width = max(10, width - self.logo_width - len(GUTTER))
 
         glyph, dot_colour, _ = status_look(self.state.status)
 
@@ -102,10 +148,11 @@ class AccountCard(Static):
             Text(truncate(self.identity, text_width), style=palette().muted, no_wrap=True),
         ]
 
+        # The first three rows are indented past the mark, which the logo
+        # widget draws over the top of.
         lines: list[Text] = []
         for index in range(3):
-            row = Text()
-            row.append(logo[index] if index < len(logo) else " " * logo_width, style=accent)
+            row = Text(" " * self.logo_width)
             row.append(GUTTER)
             row.append_text(header_rows[index])
             lines.append(row)
@@ -115,12 +162,6 @@ class AccountCard(Static):
         lines.append(Text(""))
         lines.append(self._footer(width))
         return Group(*lines)
-
-    def _logo_for(self, provider) -> tuple[str, ...]:
-        """Braille by default; box-drawing where the font cannot manage it."""
-        if self.settings.logo_style == "blocks" and provider.info.logo_blocks:
-            return provider.info.logo_blocks
-        return provider.info.logo
 
     def _title_row(self, label: str, glyph: str, dot_colour: str, width: int) -> Text:
         row = Text(no_wrap=True)
@@ -188,10 +229,5 @@ class AccountCard(Static):
             parts.append("rate limited")
         elif state.status is AccountStatus.STALE:
             parts.append("stale")
-
-        if state.last_success is not None:
-            parts.append(f"updated {ago(state.last_success)}")
-        elif state.account.enabled and state.status is not AccountStatus.NEEDS_AUTH:
-            parts.append("never updated")
 
         return Text(truncate(" · ".join(parts), width), style=palette().muted, no_wrap=True)

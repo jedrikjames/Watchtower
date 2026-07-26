@@ -27,6 +27,8 @@ class StatusLine(Static):
         self.account_count = 0
         self.problem_count = 0
         self._frame = 0
+        self._flash = ""
+        self._flash_error = False
 
     def set_status(
         self,
@@ -45,8 +47,22 @@ class StatusLine(Static):
         self.refresh()
 
     def tick(self) -> None:
-        """Called once a second by the app."""
+        """Called once a second by the app. Only this line, never the cards."""
         self._frame = (self._frame + 1) % len(SPINNER)
+        self.refresh()
+
+    def flash(self, message: str, *, error: bool = False) -> None:
+        """Show a transient message where the refresh status usually sits.
+
+        Toasts are disabled, so this is the only place a failure can surface.
+        It must never be silently dropped.
+        """
+        self._flash = message
+        self._flash_error = error
+        self.refresh()
+
+    def clear_flash(self) -> None:
+        self._flash = ""
         self.refresh()
 
     def render(self) -> Text:
@@ -73,6 +89,10 @@ class StatusLine(Static):
     def _right(self) -> Text:
         colours = palette()
         out = Text(no_wrap=True)
+        if self._flash:
+            out.append("• ", style=colours.danger if self._flash_error else colours.ok)
+            out.append(self._flash, style=colours.danger if self._flash_error else colours.subtitle)
+            return out
         if self.in_flight:
             out.append(SPINNER[self._frame], style=colours.accent)
             out.append(" refreshing", style=colours.muted)

@@ -15,7 +15,13 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label, Select, Static, Switch
 
 from ...secretstore import describe_backends
-from ...settings import MAX_REFRESH_SECONDS, MIN_REFRESH_SECONDS, Settings
+from ...settings import LOGO_STYLES, MAX_REFRESH_SECONDS, MIN_REFRESH_SECONDS, Settings
+
+#: Wording for the logo_style choices, so the dropdown is not raw enum values.
+_LOGO_LABELS = {
+    "image": "Icons (needs Sixel/Kitty)",
+    "dots": "Dots",
+}
 
 
 class SettingsScreen(ModalScreen[Settings | None]):
@@ -87,6 +93,23 @@ class SettingsScreen(ModalScreen[Settings | None]):
                     ),
                     "",
                 )
+                yield from self._row(
+                    "Provider logos",
+                    Select(
+                        [(_LOGO_LABELS[s], s) for s in LOGO_STYLES],
+                        value=self.settings.logo_style
+                        if self.settings.logo_style in LOGO_STYLES
+                        else Select.BLANK,
+                        id="logo_style",
+                        allow_blank=True,
+                    ),
+                    "",
+                )
+                yield Static(
+                    "  Real icons need a terminal with Sixel or Kitty graphics; "
+                    "anything else falls back to dots on its own.",
+                    classes="settings-note",
+                )
                 yield Static("Where secrets are kept", classes="settings-heading")
                 for backend in describe_backends():
                     mark = "•" if backend.key == self._effective_backend() else " "
@@ -155,6 +178,7 @@ class SettingsScreen(ModalScreen[Settings | None]):
             return
 
         theme = self.query_one("#theme", Select).value
+        logo_style = self.query_one("#logo_style", Select).value
         updated = replace(
             self.settings,
             refresh_seconds=refresh,
@@ -164,6 +188,9 @@ class SettingsScreen(ModalScreen[Settings | None]):
             confirm_remove=self.query_one("#confirm_remove", Switch).value,
             open_browser=self.query_one("#open_browser", Switch).value,
             theme=str(theme) if theme is not Select.BLANK else self.settings.theme,
+            logo_style=str(logo_style)
+            if logo_style is not Select.BLANK
+            else self.settings.logo_style,
         )
         updated.normalise()
         self.dismiss(updated)

@@ -21,7 +21,7 @@ from typing import Any
 from ..auth.oauth import OAuthEndpoints
 from ..errors import UsageUnavailable
 from ..logging_setup import get_logger
-from ..logos import CLAUDE_BLOCKS, CLAUDE_BRAILLE
+from ..logos import CLAUDE_BRAILLE
 from ..models import AuthMethod, Credential, UsageReport, UsageWindow
 from ..timefmt import from_iso, utcnow
 from .base import Identity, ImportCandidate, Provider, ProviderInfo
@@ -137,7 +137,6 @@ class ClaudeProvider(Provider):
         display_name="Claude",
         accent="#d97757",
         logo=LOGO,
-        logo_blocks=CLAUDE_BLOCKS,
         signin_label="Sign in with Claude",
         docs_url="https://claude.ai",
     )
