@@ -134,12 +134,18 @@ def cmd_doctor() -> int:
     # -- provider marks. The usual confusion is running one build while
     # editing another, so report what *this* binary can actually do.
     try:
+        from .providers import provider_ids
         from .settings import LOGO_STYLES
         from .settings import load as _load_settings
-        from .tui.widgets.logo import images_available, probe_image_support
+        from .tui.widgets.logo import icon_path, images_available, probe_image_support
 
         style = _load_settings().logo_style
         _safe_print(f"  Logo style  {style}  (available: {', '.join(LOGO_STYLES)})")
+
+        missing = [p for p in provider_ids() if icon_path(p) is None]
+        if missing:
+            ok = False
+            _safe_print(f"              icon assets MISSING for {', '.join(missing)}")
         if "image" not in LOGO_STYLES:
             _safe_print("              this build has no image support")
         elif not images_available():

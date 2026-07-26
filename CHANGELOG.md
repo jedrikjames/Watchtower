@@ -5,6 +5,61 @@ loosely and [semver](https://semver.org/) properly.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-26
+
+### Added
+- **Real provider icons.** On a terminal with Sixel or Kitty graphics the
+  Bootstrap Icons `openai` and `claude` glyphs are drawn as actual images.
+  Anywhere else they fall back to the same glyphs traced onto a braille dot
+  grid, so nothing is lost where they cannot be drawn. This is the default.
+  The SVGs are rasterised by `packaging/render_icons.py`, which carries its
+  own scanline fill with nonzero winding — cairosvg and reportlab both want a
+  native cairo library, which is a reliable way to make a build script fail on
+  Windows. The Windows binary bundles the image support.
+- `watchtower doctor` reports the configured logo style, whether the image
+  extra is present, whether the terminal answered the graphics query, and
+  whether the icon assets were bundled. Running one build while editing
+  another is the obvious way to be confused about missing icons.
+- `logo_style` is in the settings screen.
+
+### Changed
+- **Textual's own chrome is gone**: no `ctrl+p` command palette, `ctrl+q` no
+  longer quits (`q` still does), and the docked footer is replaced by a
+  centred hint line with reversed key caps. Rename, remove and refresh are no
+  longer advertised there; the keys still work and the actions live behind
+  enter on a card.
+- Toasts are disabled. `notify()` puts the message in the status line instead,
+  because errors still have to reach the user.
+- Everything but the modals is transparent, so the terminal's own background
+  shows through.
+- The cards no longer repaint every second. The tick existed to keep
+  "updated .. ago" honest, but repainting a card redraws its mark, and
+  re-emitting a Sixel image at 1Hz is visible as flicker. Card bodies refresh
+  when a refresh pass produces something new, and "updated .. ago" has been
+  dropped from the card entirely.
+- Two logo styles instead of three: `image` and `dots`. Box drawing is gone and
+  braille is renamed to dots. Existing configs are migrated, not rejected.
+
+### Fixed
+- **`[` and `]` never reordered cards.** The bindings used `bracketleft` and
+  `bracketright`; Textual calls those keys `left_square_bracket` and
+  `right_square_bracket`, so nothing a keyboard produces ever matched. The test
+  that covered it pressed the same wrong names — Pilot synthesises an event of
+  whatever name you give it — so it asserted the typo and passed against a
+  broken feature. The replacement presses the real characters.
+- The image mark was invisible on terminals that support Sixel perfectly well,
+  for two independent reasons. The support probe ran from `compose()`, after
+  Textual had started, where Textual's input thread eats the terminal's reply
+  and every terminal looks incapable. And the stylesheet matched the widget by
+  library type name, which textual-image swaps depending on the protocol — with
+  Sixel active the class is literally called `Image`, so no rule matched and the
+  mark got no size and no layer.
+- Image marks were stretched vertically: the slot was a fixed five cells, but
+  cells are not square, so three rows at a typical 10x20 needed six columns to
+  stay square. It is measured now.
+- The gutter is sized from the mark that was actually built rather than the one
+  that was asked for, so a fallback no longer leaves a stray column of padding.
+
 ## [0.1.2] - 2026-07-26
 
 ### Fixed
@@ -107,7 +162,8 @@ painfully. All were found and fixed before this release.
   `__main__.py` cannot be used as the entry point; the relative import fails.
   There is a separate launcher in `packaging/entry.py`.
 
-[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.2.0
 [0.1.2]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.2
 [0.1.1]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.1
 [0.1.0]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.0

@@ -17,11 +17,17 @@ from PyInstaller.utils.hooks import collect_all, copy_metadata
 SPEC_DIR = Path(SPECPATH).resolve()
 ROOT = SPEC_DIR.parent
 
-datas = [(str(ROOT / "src" / "watchtower" / "tui" / "app.tcss"), "watchtower/tui")]
+datas = [
+    (str(ROOT / "src" / "watchtower" / "tui" / "app.tcss"), "watchtower/tui"),
+    # The rendered Bootstrap Icons. Without these the binary has no icons to
+    # draw and quietly falls back to the dot marks.
+    (str(ROOT / "src" / "watchtower" / "assets" / "openai.png"), "watchtower/assets"),
+    (str(ROOT / "src" / "watchtower" / "assets" / "claude.png"), "watchtower/assets"),
+]
 binaries = []
 hiddenimports = []
 
-for package in ("textual", "rich"):
+for package in ("textual", "rich", "textual_image", "PIL"):
     package_datas, package_binaries, package_hidden = collect_all(package)
     datas += package_datas
     binaries += package_binaries
