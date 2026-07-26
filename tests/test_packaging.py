@@ -8,16 +8,17 @@ see this: nothing tracks which distribution owns an import name.
 
 Renaming only the distribution to watchtower-tui was not enough. The import
 name is the one that collides.
+
+pyproject is read as text rather than with tomllib, which is 3.11+ while this
+package supports 3.10.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import tomllib
-
 ROOT = Path(__file__).parent.parent
-PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+PYPROJECT = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
 
 def test_the_import_package_is_watchtower_tui():
@@ -26,18 +27,16 @@ def test_the_import_package_is_watchtower_tui():
 
 
 def test_the_wheel_ships_only_that_package():
-    packages = PYPROJECT["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
-    assert packages == ["src/watchtower_tui"]
+    assert 'packages = ["src/watchtower_tui"]' in PYPROJECT
 
 
 def test_the_distribution_name_matches():
-    assert PYPROJECT["project"]["name"] == "watchtower-tui"
+    assert 'name = "watchtower-tui"' in PYPROJECT
 
 
 def test_the_command_is_still_plain_watchtower():
     """Console scripts live in Scripts/ and do not collide with a module."""
-    scripts = PYPROJECT["project"]["scripts"]
-    assert scripts == {"watchtower": "watchtower_tui.cli:main"}
+    assert 'watchtower = "watchtower_tui.cli:main"' in PYPROJECT
 
 
 def test_nothing_imports_the_old_name():
@@ -62,3 +61,20 @@ def test_the_spec_bundles_from_the_new_path():
     spec = (ROOT / "packaging" / "watchtower.spec").read_text(encoding="utf-8")
     assert '"watchtower_tui/tui"' in spec
     assert '"watchtower_tui/assets"' in spec
+
+
+def test_nothing_uses_stdlib_newer_than_the_supported_python():
+    """requires-python is >=3.10, so 3.11-only modules are out.
+
+    Twice now something has passed locally on a much newer interpreter and then
+    gone red on the 3.10 leg of CI. tomllib was the most recent.
+    """
+    too_new = ("tomllib", "asyncio.taskgroups")
+    offenders = []
+    for path in list((ROOT / "src").rglob("*.py")) + list((ROOT / "tests").rglob("*.py")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            stripped = line.strip()
+            for module in too_new:
+                if stripped.startswith((f"import {module}", f"from {module} ")):
+                    offenders.append(f"{path.relative_to(ROOT)}:{number} -> {module}")
+    assert not offenders, f"needs Python 3.11 or newer: {offenders}"
