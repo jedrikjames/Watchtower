@@ -95,6 +95,29 @@ def terminal_supports_images() -> bool:
     return _support
 
 
+def logo_slot_width(style: str) -> int:
+    """How many cells wide the mark needs.
+
+    Text marks are five cells because that is how they were drawn. An image is
+    square, and terminal cells are not: at a typical 10x20 the three rows we
+    give it are 60px tall, so it needs six cells to be 60px wide too. Getting
+    this wrong is what makes the icon look stretched vertically, and since cell
+    size depends on the reader's font it has to be measured, not assumed.
+    """
+    if style != "image":
+        return LOGO_WIDTH
+    try:
+        from textual_image._terminal import get_cell_size
+
+        cell = get_cell_size()
+        if cell.width > 0 and cell.height > 0:
+            wanted = round(LOGO_HEIGHT * cell.height / cell.width)
+            return max(3, min(10, wanted))
+    except Exception as exc:  # pragma: no cover - terminal dependent
+        log.info("could not read the cell size: %s", type(exc).__name__)
+    return LOGO_WIDTH + 1
+
+
 def icon_path(provider_id: str) -> Path | None:
     candidate = ASSETS / f"{_ICON_NAMES.get(provider_id, provider_id)}.png"
     return candidate if candidate.is_file() else None
@@ -127,6 +150,9 @@ def build_logo(provider, style: str, colour: str) -> Widget:
 
                 widget = Image(str(path))
                 widget.add_class("card-logo")
+                # Width comes from the measured cell aspect, not the CSS, so
+                # the icon stays square whatever font the reader uses.
+                widget.styles.width = logo_slot_width("image")
                 return widget
             except Exception as exc:
                 log.info("image logo unavailable, using braille: %s", type(exc).__name__)

@@ -244,6 +244,6 @@ Select {
    layer. That is exactly how it ended up invisible. */
 .account-card > .card-logo {
     layer: mark;
-    width: 5;
+    width: 5;   /* image marks override this from the measured cell aspect */
     height: 3;
 }

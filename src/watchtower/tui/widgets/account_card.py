@@ -30,7 +30,7 @@ from ...providers import get_provider
 from ...settings import Settings
 from ...timefmt import ago, until
 from ..render import bar, palette, percent_text, status_look, truncate, usage_colour
-from .logo import LOGO_WIDTH, build_logo
+from .logo import build_logo, logo_slot_width
 
 GUTTER = "   "
 LABEL_WIDTH = 8
@@ -63,6 +63,7 @@ class AccountCard(Container):
         self.state = state
         self.settings = settings
         self.identity = identity
+        self.logo_width = logo_slot_width(settings.logo_style)
         self.add_class("account-card")
 
     def compose(self):
@@ -70,7 +71,7 @@ class AccountCard(Container):
         if provider is not None:
             colour = provider.info.accent
             yield build_logo(provider, self.settings.logo_style, colour)
-        yield CardBody(self.state, self.settings, self.identity)
+        yield CardBody(self.state, self.settings, self.identity, self.logo_width)
 
     @property
     def account_id(self) -> str:
@@ -101,11 +102,19 @@ class AccountCard(Container):
 class CardBody(Static):
     """Everything on the card except the mark."""
 
-    def __init__(self, state: AccountState, settings: Settings, identity: str = "", **kw) -> None:
+    def __init__(
+        self,
+        state: AccountState,
+        settings: Settings,
+        identity: str = "",
+        logo_width: int = 5,
+        **kw,
+    ) -> None:
         super().__init__(**kw)
         self.state = state
         self.settings = settings
         self.identity = identity
+        self.logo_width = logo_width
 
     def render(self) -> Group:
         account = self.state.account
@@ -113,7 +122,7 @@ class CardBody(Static):
         provider_name = provider.info.display_name if provider else account.provider
 
         width = max(28, self.content_size.width or 44)
-        text_width = max(10, width - LOGO_WIDTH - len(GUTTER))
+        text_width = max(10, width - self.logo_width - len(GUTTER))
 
         glyph, dot_colour, _ = status_look(self.state.status)
 
@@ -132,7 +141,7 @@ class CardBody(Static):
         # widget draws over the top of.
         lines: list[Text] = []
         for index in range(3):
-            row = Text(" " * LOGO_WIDTH)
+            row = Text(" " * self.logo_width)
             row.append(GUTTER)
             row.append_text(header_rows[index])
             lines.append(row)

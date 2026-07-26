@@ -42,6 +42,7 @@ from .screens import (
     UnlockScreen,
 )
 from .widgets import AccountCard, StatusLine
+from .widgets.account_card import CardBody
 from .widgets.logo import probe_image_support
 
 log = get_logger("tui")
@@ -127,8 +128,8 @@ class WatchtowerApp(App[None]):
             set_palette(self.current_theme)
         except Exception:  # fires once before the app is fully constructed
             return
-        for card in self.query(AccountCard):
-            card.refresh()
+        for body in self.query(CardBody):
+            body.refresh()
 
     def _modal_open(self) -> bool:
         """True when something is already on top of the dashboard."""
@@ -259,8 +260,11 @@ class WatchtowerApp(App[None]):
             self.query_one(StatusLine).tick()
         except Exception:  # pragma: no cover - during teardown
             return
-        for card in self.query(AccountCard):
-            card.refresh()
+        # Only the body, never the whole card. Refreshing the card would
+        # redraw its logo too, and re-emitting a Sixel image once a second is
+        # visible as flicker. The mark never changes, so it never needs it.
+        for body in self.query(CardBody):
+            body.refresh()
 
     def _update_status(self) -> None:
         try:

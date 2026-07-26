@@ -77,3 +77,66 @@ class TestStyling:
         assert ".account-card > .card-logo" in css
         for guessed in ("AutoImage", "SixelImage", "TGPImage", "HalfcellImage", "UnicodeImage"):
             assert guessed not in css, f"{guessed} is a library type name and may not match"
+
+
+class TestSlotWidth:
+    """A square icon in non-square cells needs its width computed, not assumed.
+
+    Cells are typically twice as tall as they are wide, so three rows of mark
+    is about six cells of width. Reserving five stretched the icon vertically.
+    """
+
+    def test_text_marks_are_five_cells(self):
+        from watchtower.tui.widgets.logo import LOGO_WIDTH, logo_slot_width
+
+        assert logo_slot_width("braille") == LOGO_WIDTH
+        assert logo_slot_width("blocks") == LOGO_WIDTH
+
+    def test_image_width_follows_the_cell_aspect(self, monkeypatch):
+        from types import SimpleNamespace
+
+        import watchtower.tui.widgets.logo as logo_mod
+
+        def fake_cell_size(w, h):
+            return lambda: SimpleNamespace(width=w, height=h)
+
+        # 10x20 cells: 3 rows = 60px tall, so 6 cells = 60px wide. Square.
+        monkeypatch.setattr("textual_image._terminal.get_cell_size", fake_cell_size(10, 20))
+        assert logo_mod.logo_slot_width("image") == 6
+
+        # 8x16 is the same 1:2 ratio, so also 6.
+        monkeypatch.setattr("textual_image._terminal.get_cell_size", fake_cell_size(8, 16))
+        assert logo_mod.logo_slot_width("image") == 6
+
+        # A squarer cell needs fewer columns.
+        monkeypatch.setattr("textual_image._terminal.get_cell_size", fake_cell_size(10, 12))
+        assert logo_mod.logo_slot_width("image") == 4
+
+    def test_width_is_clamped_against_a_nonsense_cell_size(self, monkeypatch):
+        from types import SimpleNamespace
+
+        import watchtower.tui.widgets.logo as logo_mod
+
+        monkeypatch.setattr(
+            "textual_image._terminal.get_cell_size", lambda: SimpleNamespace(width=1, height=400)
+        )
+        assert 3 <= logo_mod.logo_slot_width("image") <= 10
+
+    def test_falls_back_when_the_cell_size_is_unreadable(self, monkeypatch):
+        import watchtower.tui.widgets.logo as logo_mod
+
+        def boom():
+            raise RuntimeError("no terminal")
+
+        monkeypatch.setattr("textual_image._terminal.get_cell_size", boom)
+        assert logo_mod.logo_slot_width("image") >= 3
+
+
+def test_the_body_indents_by_the_real_slot_width():
+    """Otherwise a six-cell icon overlaps the account name."""
+    from watchtower.settings import Settings
+    from watchtower.tui.widgets.account_card import CardBody
+
+    settings = Settings()
+    body = CardBody(state=None, settings=settings, identity="", logo_width=7)
+    assert body.logo_width == 7
