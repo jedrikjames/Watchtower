@@ -1,0 +1,34 @@
+# Windows version resource, so the binary has sensible file properties
+# instead of showing up as a blank "Watchtower.exe" with no publisher.
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(0, 1, 0, 0),
+    prodvers=(0, 1, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          '040904B0',
+          [
+            StringStruct('CompanyName', 'Watchtower contributors'),
+            StringStruct('FileDescription', 'Terminal dashboard for Codex and Claude usage limits'),
+            StringStruct('FileVersion', '0.1.0'),
+            StringStruct('InternalName', 'watchtower'),
+            StringStruct('LegalCopyright', 'MIT Licence. Copyright (c) 2026 Watchtower contributors'),
+            StringStruct('OriginalFilename', 'Watchtower.exe'),
+            StringStruct('ProductName', 'Watchtower'),
+            StringStruct('ProductVersion', '0.1.0'),
+          ]
+        )
+      ]
+    ),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)

@@ -1,0 +1,218 @@
+/* Understated on purpose: one accent, a lot of space, thin borders.
+   Colours come from the active Textual theme so switching themes in
+   settings actually changes everything, including the usage bars. */
+
+Screen {
+    background: $surface;
+    layers: base overlay;
+}
+
+/* ---------------------------------------------------------------- chrome */
+
+StatusLine {
+    height: 1;
+    padding: 0 2;
+    background: $surface;
+    color: $foreground;
+}
+
+#topbar {
+    height: 2;
+    padding-top: 1;
+    background: $surface;
+}
+
+#board {
+    padding: 1 2;
+    height: 1fr;
+    background: $surface;
+}
+
+Footer {
+    background: $surface;
+    color: $text-muted;
+}
+
+/* ----------------------------------------------------------------- cards */
+
+#cards {
+    grid-gutter: 1 2;
+    padding: 0 0 1 0;
+}
+
+.account-card {
+    height: 11;
+    padding: 0 2;
+    border: round $panel;
+    background: $surface;
+    color: $foreground;
+}
+
+.account-card:focus {
+    border: round $primary;
+    background: $boost;
+}
+
+.account-card.-problem {
+    border: round $error 60%;
+}
+
+.account-card.-problem:focus {
+    border: round $error;
+}
+
+.account-card.-paused {
+    opacity: 0.55;
+}
+
+/* ------------------------------------------------------------ empty state */
+
+#empty {
+    align: center middle;
+    height: 1fr;
+}
+
+.empty-title {
+    text-style: bold;
+    width: auto;
+    padding-bottom: 1;
+}
+
+/* width:auto sizes to the longest line, so the block centres as a unit while
+   the lines inside stay flush left. Centring each line looks ragged. */
+.empty-body {
+    color: $text-muted;
+    width: auto;
+    text-align: left;
+    padding-bottom: 1;
+}
+
+.empty-hint {
+    color: $text-muted;
+    width: auto;
+}
+
+/* ---------------------------------------------------------------- modals */
+
+ModalScreen {
+    align: center middle;
+    background: $surface 60%;
+}
+
+.modal {
+    width: 64;
+    height: auto;
+    max-height: 90%;
+    padding: 1 2;
+    border: round $primary 70%;
+    background: $panel;
+}
+
+.modal-narrow {
+    width: 52;
+}
+
+.modal-wide {
+    width: 74;
+}
+
+.modal-title {
+    text-style: bold;
+    padding-bottom: 1;
+    width: 100%;
+}
+
+.modal-detail {
+    color: $text-muted;
+    padding-bottom: 1;
+    width: 100%;
+}
+
+.modal-error {
+    color: $error;
+    padding-bottom: 1;
+    width: 100%;
+}
+
+.modal-hint {
+    color: $text-muted;
+    padding-top: 1;
+    width: 100%;
+}
+
+.modal-buttons {
+    height: auto;
+    padding-top: 1;
+    align-horizontal: right;
+}
+
+.modal-buttons Button {
+    margin-left: 2;
+    min-width: 12;
+}
+
+OptionList {
+    background: $panel;
+    border: none;
+    padding: 0;
+    height: auto;
+    max-height: 14;
+}
+
+.signin-url {
+    color: $accent;
+    padding: 1 0;
+    width: 100%;
+}
+
+.help-body {
+    height: auto;
+    max-height: 20;
+}
+
+.help-row {
+    color: $text-muted;
+    width: 100%;
+}
+
+/* -------------------------------------------------------------- settings */
+
+.settings-body {
+    height: auto;
+    max-height: 22;
+}
+
+.settings-row {
+    height: 3;
+    align-vertical: middle;
+}
+
+.settings-label {
+    width: 26;
+    padding-top: 1;
+}
+
+.settings-hint {
+    color: $text-muted;
+    padding: 1 0 0 2;
+    width: 1fr;
+}
+
+.small-input {
+    width: 10;
+}
+
+.settings-heading {
+    text-style: bold;
+    padding: 1 0 0 0;
+    width: 100%;
+}
+
+.settings-note {
+    color: $text-muted;
+    width: 100%;
+}
+
+Select {
+    width: 24;
+}

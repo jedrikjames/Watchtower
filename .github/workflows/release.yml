@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build and publish"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows-binary:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          pip install -e ".[dev]"
+          pip install pyinstaller
+
+      - name: Test before shipping
+        run: pytest -q
+
+      - name: Build
+        run: pyinstaller packaging/watchtower.spec --noconfirm
+
+      # A binary that cannot start is worse than no binary. `doctor` exercises
+      # the two things packaging actually breaks: the bundled stylesheet and
+      # the keyring backends, which are found through entry points.
+      - name: Smoke test the binary
+        run: |
+          .\dist\Watchtower.exe --version
+          .\dist\Watchtower.exe doctor
+
+      - name: Checksum
+        run: |
+          $hash = (Get-FileHash .\dist\Watchtower.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Watchtower.exe" | Out-File -Encoding ascii .\dist\Watchtower.exe.sha256
+          Get-Content .\dist\Watchtower.exe.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Watchtower-windows
+          path: |
+            dist/Watchtower.exe
+            dist/Watchtower.exe.sha256
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/Watchtower.exe
+            dist/Watchtower.exe.sha256
+          generate_release_notes: true

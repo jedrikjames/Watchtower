@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# textual console / dev artefacts
+*.log
+.textual/
+
+# never, ever commit a local vault or account file
+*.vault
+accounts.json
+config.json
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# build artefacts
+dist/
+build/
+*.manifest
