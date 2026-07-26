@@ -4,7 +4,7 @@
 
 Screen {
     background: $surface;
-    layers: base overlay;
+    layers: body mark;
 }
 
 /* ---------------------------------------------------------------- chrome */
@@ -215,4 +215,35 @@ OptionList {
 
 Select {
     width: 24;
+}
+
+/* ------------------------------------------------------------------ logos */
+
+/* The mark and the body sit on separate layers. Textual arranges each layer
+   independently, so both start at the card's top-left: the body fills the
+   card, the mark occupies the 5x3 gutter the body leaves blank for it.
+   Keeping them apart is what lets the body repaint every second without
+   touching the mark - which is what stops Sixel and Kitty images flickering. */
+.account-card {
+    layers: body mark;
+}
+
+/* Explicit, not 100%: a percentage would resolve against the card, whose own
+   height would then depend on its children, and the circle collapses the card
+   to the height of the mark. 9 content rows + 2 border rows = the card's 11. */
+.account-card > CardBody {
+    layer: body;
+    width: 100%;
+    height: 9;
+}
+
+.account-card > TextLogo,
+.account-card > AutoImage,
+.account-card > SixelImage,
+.account-card > TGPImage,
+.account-card > HalfcellImage,
+.account-card > UnicodeImage {
+    layer: mark;
+    width: 5;
+    height: 3;
 }

@@ -36,6 +36,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Real provider icons on terminals that speak Sixel or Kitty graphics. Kept
+# optional because Pillow is 7 MB and the braille marks work everywhere.
+images = [
+    "textual-image>=0.7",
+    "pillow>=10.3",
+]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -53,6 +59,7 @@ watchtower = "watchtower.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/watchtower"]
+artifacts = ["src/watchtower/assets/*.png"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/watchtower", "tests", "README.md", "LICENSE", "CHANGELOG.md"]

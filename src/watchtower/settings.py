@@ -22,7 +22,7 @@ MIN_REFRESH_SECONDS = 30
 MAX_REFRESH_SECONDS = 3600
 
 SECRET_BACKENDS = ("auto", "keyring", "file")
-LOGO_STYLES = ("braille", "blocks")
+LOGO_STYLES = ("braille", "blocks", "image")
 
 
 def _matches_type(current: Any, value: Any) -> bool:
@@ -68,8 +68,10 @@ class Settings:
     #: Textual theme name.
     theme: str = "textual-dark"
 
-    #: "braille" for the detailed provider marks, "blocks" for the simpler
-    #: box-drawing ones if your terminal font has no braille coverage.
+    #: How to draw the provider marks. "braille" traces them onto a dot grid
+    #: and works everywhere; "blocks" is the plainer box-drawing fallback;
+    #: "image" draws the real icons on terminals with Sixel or Kitty graphics
+    #: and needs the optional extra (pip install watchtower-tui[images]).
     logo_style: str = "braille"
 
     def to_dict(self) -> dict[str, Any]:
