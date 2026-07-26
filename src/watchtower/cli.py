@@ -149,7 +149,7 @@ def cmd_doctor() -> int:
         if "image" not in LOGO_STYLES:
             _safe_print("              this build has no image support")
         elif not images_available():
-            _safe_print("              image extra missing: pip install watchtower-tui[images]")
+            _safe_print("              image support missing - reinstall Watchtower")
         elif probe_image_support():
             _safe_print("              terminal graphics: yes, icons will be drawn")
         else:

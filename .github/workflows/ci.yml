@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev,images]"
+      - run: pip install -e ".[dev]"
       - run: ruff check src tests
       - run: ruff format --check src tests
 
@@ -35,7 +35,7 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: Install
-        run: pip install -e ".[dev,images]"
+        run: pip install -e ".[dev]"
 
       # The keyring backend on a headless runner is a dead end, and the tests
       # use the file vault regardless. This stops keyring from trying to start

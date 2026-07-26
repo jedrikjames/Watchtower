@@ -35,8 +35,8 @@ leaves your computer except the calls to the providers themselves.
 The provider marks are the Bootstrap Icons `openai` and `claude` glyphs. On a
 terminal with Sixel or Kitty graphics they are drawn as real images; anywhere
 else they fall back to the same glyphs traced onto a braille dot grid, which
-gives 2x4 dots per cell — enough for the shapes to survive. Real icons need
-`pip install watchtower-tui[images]`.
+gives 2x4 dots per cell — enough for the shapes to survive. Both come out of
+the box; `logo_style = "dots"` forces the trace if you prefer it.
 
 ## Install
 
@@ -213,6 +213,10 @@ To build the Windows binary yourself:
 pip install -e ".[dev]" pyinstaller
 pyinstaller packaging/watchtower.spec
 ```
+
+The provider icons are rendered from the upstream SVGs by
+`packaging/render_icons.py`. The PNGs are committed, so you only need to run it
+if the source icons change.
 
 ### Layout
 

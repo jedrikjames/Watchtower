@@ -5,6 +5,21 @@ loosely and [semver](https://semver.org/) properly.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-26
+
+### Changed
+- **Image support is an ordinary dependency, not an optional extra.**
+  `logo_style` defaults to `image`, so making the packages it needs opt-in was
+  a contradiction: a plain `pip install` would have fallen back to dots on
+  every machine while the config claimed otherwise. `pip install watchtower-tui`
+  now gets the icons. `[images]` is kept as an empty alias so the 0.2.0
+  instruction still resolves.
+
+### Fixed
+- CI was red on 0.2.0. Three tests patch `textual_image._terminal` to check the
+  cell-aspect maths and the workflows installed only `[dev]`; they passed
+  locally because the extra happened to be in the author's virtualenv.
+
 ## [0.2.0] - 2026-07-26
 
 ### Added
@@ -162,7 +177,8 @@ painfully. All were found and fixed before this release.
   `__main__.py` cannot be used as the entry point; the relative import fails.
   There is a separate launcher in `packaging/entry.py`.
 
-[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.2.1
 [0.2.0]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.2.0
 [0.1.2]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.2
 [0.1.1]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.1

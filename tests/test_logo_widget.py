@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from watchtower.providers import ClaudeProvider, CodexProvider
 from watchtower.tui.widgets.logo import TextLogo, build_logo, icon_path, images_available
 
@@ -94,10 +92,6 @@ class TestSlotWidth:
     Cells are typically twice as tall as they are wide, so three rows of mark
     is about six cells of width. Reserving five stretched the icon vertically.
 
-    The cases that patch the cell size need textual_image importable, so they
-    skip without the optional extra rather than failing. The extra is genuinely
-    optional and a contributor should not need it to run the suite; CI installs
-    it so the path is still covered somewhere.
     """
 
     def test_text_marks_are_five_cells(self):
@@ -107,7 +101,6 @@ class TestSlotWidth:
         assert logo_slot_width("blocks") == LOGO_WIDTH
 
     def test_image_width_follows_the_cell_aspect(self, monkeypatch):
-        pytest.importorskip("textual_image")
         from types import SimpleNamespace
 
         import watchtower.tui.widgets.logo as logo_mod
@@ -128,7 +121,6 @@ class TestSlotWidth:
         assert logo_mod.logo_slot_width("image") == 4
 
     def test_width_is_clamped_against_a_nonsense_cell_size(self, monkeypatch):
-        pytest.importorskip("textual_image")
         from types import SimpleNamespace
 
         import watchtower.tui.widgets.logo as logo_mod
@@ -139,7 +131,6 @@ class TestSlotWidth:
         assert 3 <= logo_mod.logo_slot_width("image") <= 10
 
     def test_falls_back_when_the_cell_size_is_unreadable(self, monkeypatch):
-        pytest.importorskip("textual_image")
         import watchtower.tui.widgets.logo as logo_mod
 
         def boom():
@@ -159,17 +150,24 @@ def test_the_body_indents_by_the_real_slot_width():
     assert body.logo_width == 7
 
 
-def test_the_workflows_install_the_image_extra():
-    """The packaged binary defaults to logo_style = image.
+def test_image_support_is_a_core_dependency():
+    """logo_style defaults to "image", so the packages it needs are not optional.
 
-    PyInstaller's collect_all("textual_image") needs the package present, and a
-    build without it would ship a binary that falls back to dots on every
-    machine. CI installing only [dev] is how three tests went red after passing
-    locally, where the extra happened to be installed.
+    An optional dependency that the default setting requires is a contradiction:
+    a plain `pip install` would fall back to dots on every machine while the
+    config claimed otherwise.
     """
     from pathlib import Path
 
-    workflows = Path(__file__).parent.parent / ".github/workflows"
-    for name in ("ci.yml", "release.yml"):
-        text = (workflows / name).read_text(encoding="utf-8")
-        assert 'pip install -e ".[dev,images]"' in text, f"{name} must install the images extra"
+    pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+    core = pyproject[pyproject.index("dependencies = [") : pyproject.index("[project.optional")]
+    assert "textual-image" in core
+    assert "pillow" in core
+
+
+def test_the_old_extra_still_resolves():
+    """`pip install watchtower-tui[images]` was the 0.2.0 instruction."""
+    from pathlib import Path
+
+    pyproject = (Path(__file__).parent.parent / "pyproject.toml").read_text(encoding="utf-8")
+    assert "images = []" in pyproject

@@ -8,9 +8,9 @@ Two reasons it is not just part of the card's render():
 * It keeps both ways of drawing a mark - real icon and dot grid - in one
   place instead of branching inside the card layout.
 
-Image support is optional. `pip install watchtower-tui[images]` pulls in
-Pillow and textual-image; without them this quietly falls back to dots,
-which is why every import of them is guarded.
+Pillow and textual-image are ordinary dependencies, but every import of them
+is still guarded: a broken or partial install should cost you the icons, not
+the dashboard.
 """
 
 from __future__ import annotations

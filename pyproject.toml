@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # distribution is watchtower-tui. The import package and the command are both
 # plain "watchtower".
 name = "watchtower-tui"
-version = "0.2.0"
+version = "0.2.1"
 description = "A small terminal dashboard for the usage limits on your Codex and Claude accounts."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -33,15 +33,19 @@ dependencies = [
     "keyring>=24.0",
     "cryptography>=42.0",
     "platformdirs>=4.0",
-]
-
-[project.optional-dependencies]
-# Real provider icons on terminals that speak Sixel or Kitty graphics. Kept
-# optional because Pillow is 7 MB and the braille marks work everywhere.
-images = [
+    # Real provider icons. Not optional: logo_style defaults to "image", and an
+    # optional dependency that the default setting needs is a contradiction.
+    # They cost about 7 MB and degrade to the dot marks on their own wherever
+    # the terminal has no graphics protocol.
     "textual-image>=0.7",
     "pillow>=10.3",
 ]
+
+[project.optional-dependencies]
+# Kept as an empty alias so `pip install watchtower-tui[images]` still resolves
+# for anyone who followed the 0.2.0 instructions. The packages it used to pull
+# in are ordinary dependencies now.
+images = []
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
