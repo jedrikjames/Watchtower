@@ -2,7 +2,7 @@
 
 The TUI holds one AccountManager and asks it to do things. The manager owns the
 account list, the credential store and the in-memory state each card renders
-from. It does not import anything from watchtower.tui, and it should stay that way
+from. It does not import anything from watchtower_tui.tui, and it should stay
 - there is a headless CLI that drives the same object.
 """
 

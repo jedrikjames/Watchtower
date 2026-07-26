@@ -8,13 +8,13 @@ from urllib.parse import parse_qs, urlsplit
 import httpx
 import pytest
 
-import watchtower.providers as registry
+import watchtower_tui.providers as registry
 from tests.helpers import FakeTokenServer
-from watchtower.errors import NetworkError, RateLimited, ReauthRequired, UsageUnavailable
-from watchtower.models import AccountStatus, AuthMethod, Credential, UsageReport, UsageWindow
-from watchtower.providers.base import Identity, Provider, ProviderInfo
-from watchtower.secretstore.vault import FileVault
-from watchtower.service import AccountManager
+from watchtower_tui.errors import NetworkError, RateLimited, ReauthRequired, UsageUnavailable
+from watchtower_tui.models import AccountStatus, AuthMethod, Credential, UsageReport, UsageWindow
+from watchtower_tui.providers.base import Identity, Provider, ProviderInfo
+from watchtower_tui.secretstore.vault import FileVault
+from watchtower_tui.service import AccountManager
 
 
 class StubProvider(Provider):
@@ -262,7 +262,7 @@ def test_identity_masking(manager, settings):
 
 async def test_sign_in_end_to_end(settings, monkeypatch):
     """Loopback listener, state check, code exchange and credential write."""
-    from watchtower.providers.claude import ClaudeProvider
+    from watchtower_tui.providers.claude import ClaudeProvider
 
     port = 47399
     monkeypatch.setenv("WATCHTOWER_CLAUDE_REDIRECT_PORT", str(port))

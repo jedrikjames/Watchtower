@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from watchtower.logos import CLAUDE_BRAILLE, OPENAI_BRAILLE, to_braille
-from watchtower.providers.claude import ClaudeProvider, _normalise_tier
-from watchtower.providers.codex import CodexProvider
-from watchtower.settings import Settings
-from watchtower.timefmt import until, utcnow
+from watchtower_tui.logos import CLAUDE_BRAILLE, OPENAI_BRAILLE, to_braille
+from watchtower_tui.providers.claude import ClaudeProvider, _normalise_tier
+from watchtower_tui.providers.codex import CodexProvider
+from watchtower_tui.settings import Settings
+from watchtower_tui.timefmt import until, utcnow
 
 
 class TestSubscriptionTier:
@@ -67,7 +67,7 @@ class TestNextRunCountdown:
 
     async def test_next_run_is_set_before_the_completion_callback(self):
         """The UI reads next_run from on_complete, so it has to be fresh by then."""
-        from watchtower.service.refresh import RefreshScheduler
+        from watchtower_tui.service.refresh import RefreshScheduler
 
         class FakeManager:
             settings = Settings()
@@ -86,7 +86,7 @@ class TestNextRunCountdown:
         assert until(seen[0]) not in ("", "now")
 
     async def test_countdown_renders_as_a_duration(self):
-        from watchtower.service.refresh import RefreshScheduler
+        from watchtower_tui.service.refresh import RefreshScheduler
 
         class FakeManager:
             settings = Settings()
@@ -103,10 +103,10 @@ class TestUsageAuthFailures:
     """A 401 from an undocumented usage endpoint is not proof of a dead login."""
 
     async def test_a_working_credential_is_not_reported_as_expired(self, settings):
-        from watchtower.errors import ReauthRequired, UsageUnavailable
-        from watchtower.models import AuthMethod, Credential
-        from watchtower.secretstore.vault import FileVault
-        from watchtower.service import AccountManager
+        from watchtower_tui.errors import ReauthRequired, UsageUnavailable
+        from watchtower_tui.models import AuthMethod, Credential
+        from watchtower_tui.secretstore.vault import FileVault
+        from watchtower_tui.service import AccountManager
 
         class AlwaysRefusesUsage:
             info = CodexProvider.info
@@ -130,10 +130,10 @@ class TestUsageAuthFailures:
         assert "endpoint" in caught.value.friendly.lower()
 
     async def test_a_genuinely_dead_credential_still_asks_for_reauth(self, settings):
-        from watchtower.errors import ReauthRequired
-        from watchtower.models import AuthMethod, Credential
-        from watchtower.secretstore.vault import FileVault
-        from watchtower.service import AccountManager
+        from watchtower_tui.errors import ReauthRequired
+        from watchtower_tui.models import AuthMethod, Credential
+        from watchtower_tui.secretstore.vault import FileVault
+        from watchtower_tui.service import AccountManager
 
         class EverythingIsDead:
             info = CodexProvider.info

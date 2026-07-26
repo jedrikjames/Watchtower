@@ -1,6 +1,6 @@
 # Writing a provider adapter
 
-Everything provider-specific lives in `src/watchtower/providers/`. The rest of the
+Everything provider-specific lives in `src/watchtower_tui/providers/`. The rest of the
 app talks to providers through one small interface and looks them up by id, so
 adding one does not touch the UI, the storage layer or the refresh loop.
 
@@ -9,10 +9,10 @@ adding one does not touch the UI, the storage layer or the refresh loop.
 Subclass `Provider` and fill in the parts you need.
 
 ```python
-from watchtower.auth.oauth import OAuthEndpoints
-from watchtower.models import Credential, UsageReport, UsageWindow
-from watchtower.providers.base import Identity, Provider, ProviderInfo
-from watchtower.providers.http import client, get_json
+from watchtower_tui.auth.oauth import OAuthEndpoints
+from watchtower_tui.models import Credential, UsageReport, UsageWindow
+from watchtower_tui.providers.base import Identity, Provider, ProviderInfo
+from watchtower_tui.providers.http import client, get_json
 
 
 class AcmeProvider(Provider):

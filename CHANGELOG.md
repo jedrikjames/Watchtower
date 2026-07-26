@@ -5,6 +5,25 @@ loosely and [semver](https://semver.org/) properly.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-26
+
+### Fixed
+- **The import package is `watchtower_tui`, not `watchtower`.** `watchtower` on
+  PyPI is the AWS CloudWatch logging handler, and shipping a top-level package
+  of that name was actively harmful: a plain `pip install` dropped our modules
+  into its directory and replaced its `__init__.py`, so Watchtower worked while
+  the user's CloudWatch logging silently stopped. Anyone who already had it
+  installed got `ModuleNotFoundError: No module named 'watchtower.cli'` instead,
+  because the other package owned the name first.
+
+  Renaming only the distribution to `watchtower-tui` in 0.1.0 was not enough —
+  the import name is the one that collides, and `pip check` cannot see this
+  because nothing tracks which distribution owns an import name.
+
+  The command is still plain `watchtower`; console scripts do not collide.
+  Verified by installing both packages into one environment and confirming each
+  still works.
+
 ## [0.2.1] - 2026-07-26
 
 ### Changed
@@ -177,7 +196,8 @@ painfully. All were found and fixed before this release.
   `__main__.py` cannot be used as the entry point; the relative import fails.
   There is a separate launcher in `packaging/entry.py`.
 
-[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/jedrikjames/Watchtower/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.2.2
 [0.2.1]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.2.1
 [0.2.0]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.2.0
 [0.1.2]: https://github.com/jedrikjames/Watchtower/releases/tag/v0.1.2

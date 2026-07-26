@@ -23,7 +23,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 SVG_DIR = ROOT / "assets" / "icons"
-OUT_DIR = ROOT / "src" / "watchtower" / "assets"
+OUT_DIR = ROOT / "src" / "watchtower_tui" / "assets"
 
 #: Rendered size in pixels. Generous, because the terminal decides how many
 #: pixels a cell is and we would rather downscale than upscale.

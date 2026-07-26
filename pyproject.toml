@@ -3,11 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-# "watchtower" on PyPI is an unrelated CloudWatch logging handler, so the
-# distribution is watchtower-tui. The import package and the command are both
-# plain "watchtower".
+# "watchtower" on PyPI is an unrelated AWS CloudWatch logging handler. Both the
+# distribution *and* the import package are watchtower_tui to stay clear of it:
+# renaming only the distribution is not enough, because the import name is what
+# actually collides - installing over it silently replaces the other package.
+# The command is still plain "watchtower"; console scripts do not collide.
 name = "watchtower-tui"
-version = "0.2.1"
+version = "0.2.2"
 description = "A small terminal dashboard for the usage limits on your Codex and Claude accounts."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -59,14 +61,14 @@ Issues = "https://github.com/jedrikjames/Watchtower/issues"
 Changelog = "https://github.com/jedrikjames/Watchtower/blob/main/CHANGELOG.md"
 
 [project.scripts]
-watchtower = "watchtower.cli:main"
+watchtower = "watchtower_tui.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/watchtower"]
-artifacts = ["src/watchtower/assets/*.png"]
+packages = ["src/watchtower_tui"]
+artifacts = ["src/watchtower_tui/assets/*.png"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/watchtower", "tests", "README.md", "LICENSE", "CHANGELOG.md"]
+include = ["src/watchtower_tui", "tests", "README.md", "LICENSE", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

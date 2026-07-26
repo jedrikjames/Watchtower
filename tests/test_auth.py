@@ -17,9 +17,9 @@ import httpx
 import pytest
 
 from tests.helpers import FakeTokenServer
-from watchtower.auth import LoopbackReceiver, new_pkce, new_state
-from watchtower.auth.oauth import OAuthClient, OAuthEndpoints, decode_jwt_claims
-from watchtower.errors import AuthCancelled, AuthError, AuthTimeout, ReauthRequired
+from watchtower_tui.auth import LoopbackReceiver, new_pkce, new_state
+from watchtower_tui.auth.oauth import OAuthClient, OAuthEndpoints, decode_jwt_claims
+from watchtower_tui.errors import AuthCancelled, AuthError, AuthTimeout, ReauthRequired
 
 CALLBACK_PORT = 47311
 
@@ -224,8 +224,8 @@ async def test_state_is_sent_when_a_provider_asks_for_it():
 
 
 def test_shipping_providers_agree_with_their_endpoints():
-    from watchtower.providers.claude import ClaudeProvider
-    from watchtower.providers.codex import CodexProvider
+    from watchtower_tui.providers.claude import ClaudeProvider
+    from watchtower_tui.providers.codex import CodexProvider
 
     assert ClaudeProvider().oauth_endpoints().send_state_with_code is True
     assert CodexProvider().oauth_endpoints().send_state_with_code is False

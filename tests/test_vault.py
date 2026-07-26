@@ -6,9 +6,9 @@ import json
 
 import pytest
 
-from watchtower.errors import StorageError, VaultLocked, VaultPassphraseError
-from watchtower.paths import vault_file
-from watchtower.secretstore.vault import FileVault
+from watchtower_tui.errors import StorageError, VaultLocked, VaultPassphraseError
+from watchtower_tui.paths import vault_file
+from watchtower_tui.secretstore.vault import FileVault
 
 
 def make_vault(passphrase: str = "correct horse") -> FileVault:

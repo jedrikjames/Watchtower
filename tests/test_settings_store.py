@@ -6,13 +6,13 @@ import json
 
 import pytest
 
-from watchtower import settings as settings_module
-from watchtower.errors import StorageError
-from watchtower.fsutil import read_json, write_json_atomic
-from watchtower.models import Account, UsageReport, UsageWindow
-from watchtower.paths import accounts_file, app_dir, config_file
-from watchtower.settings import MAX_REFRESH_SECONDS, MIN_REFRESH_SECONDS, Settings
-from watchtower.store import AccountRepository, UsageCache
+from watchtower_tui import settings as settings_module
+from watchtower_tui.errors import StorageError
+from watchtower_tui.fsutil import read_json, write_json_atomic
+from watchtower_tui.models import Account, UsageReport, UsageWindow
+from watchtower_tui.paths import accounts_file, app_dir, config_file
+from watchtower_tui.settings import MAX_REFRESH_SECONDS, MIN_REFRESH_SECONDS, Settings
+from watchtower_tui.store import AccountRepository, UsageCache
 
 
 class TestSettings:
@@ -146,7 +146,7 @@ class TestFileHandling:
 
 class TestPaths:
     def test_env_override_pointing_at_a_file_is_rejected(self, tmp_path, monkeypatch):
-        from watchtower.paths import ENV_HOME
+        from watchtower_tui.paths import ENV_HOME
 
         target = tmp_path / "a-file"
         target.write_text("x")

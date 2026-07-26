@@ -64,9 +64,9 @@ watchtower
 
 > **Note**
 > `pip install watchtower` gets you an unrelated AWS CloudWatch logging
-> handler. This project is not on PyPI; install it from this repository. The
-> distribution name here is `watchtower-tui` to avoid the clash — the command
-> and the import package are both plain `watchtower`.
+> handler. This project is not on PyPI; install it from this repository. Both
+> the distribution and the import package are `watchtower_tui` so the two can
+> live side by side — the command is still plain `watchtower`.
 
 First run drops you on an empty dashboard. Press `a`, pick a provider, finish
 in the browser window that opens, and the card appears.
@@ -221,7 +221,7 @@ if the source icons change.
 ### Layout
 
 ```
-src/watchtower/
+src/watchtower_tui/
   cli.py             argparse entry point
   models.py          Account, Credential, UsageReport and friends
   settings.py        config.json, defensively parsed

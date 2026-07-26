@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from watchtower import logging_setup, paths
+from watchtower_tui import logging_setup, paths
 
 
 @pytest.fixture(autouse=True)
@@ -12,7 +12,7 @@ def isolated_home(tmp_path, monkeypatch):
     monkeypatch.setenv(paths.ENV_HOME, str(home))
     # fsutil caches which paths it has already hardened; a fresh tmp_path each
     # test would otherwise be skipped after the first one.
-    from watchtower import fsutil
+    from watchtower_tui import fsutil
 
     fsutil._hardened.clear()
     logging_setup.forget_secrets()
@@ -21,7 +21,7 @@ def isolated_home(tmp_path, monkeypatch):
 
 @pytest.fixture
 def settings():
-    from watchtower.settings import Settings
+    from watchtower_tui.settings import Settings
 
     value = Settings()
     value.secret_backend = "file"

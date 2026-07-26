@@ -18,11 +18,11 @@ SPEC_DIR = Path(SPECPATH).resolve()
 ROOT = SPEC_DIR.parent
 
 datas = [
-    (str(ROOT / "src" / "watchtower" / "tui" / "app.tcss"), "watchtower/tui"),
+    (str(ROOT / "src" / "watchtower_tui" / "tui" / "app.tcss"), "watchtower_tui/tui"),
     # The rendered Bootstrap Icons. Without these the binary has no icons to
     # draw and quietly falls back to the dot marks.
-    (str(ROOT / "src" / "watchtower" / "assets" / "openai.png"), "watchtower/assets"),
-    (str(ROOT / "src" / "watchtower" / "assets" / "claude.png"), "watchtower/assets"),
+    (str(ROOT / "src" / "watchtower_tui" / "assets" / "openai.png"), "watchtower_tui/assets"),
+    (str(ROOT / "src" / "watchtower_tui" / "assets" / "claude.png"), "watchtower_tui/assets"),
 ]
 binaries = []
 hiddenimports = []

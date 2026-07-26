@@ -6,8 +6,8 @@ import logging
 
 import pytest
 
-from watchtower.logging_setup import RedactingFilter, register_secret, scrub
-from watchtower.models import AuthMethod, Credential
+from watchtower_tui.logging_setup import RedactingFilter, register_secret, scrub
+from watchtower_tui.models import AuthMethod, Credential
 
 
 @pytest.mark.parametrize(
@@ -93,7 +93,7 @@ def test_credential_repr_hides_everything():
 
 
 def test_pkce_verifier_is_not_in_its_repr():
-    from watchtower.auth.pkce import new_pkce
+    from watchtower_tui.auth.pkce import new_pkce
 
     pair = new_pkce()
     assert pair.verifier not in repr(pair)

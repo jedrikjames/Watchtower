@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from watchtower.providers import ClaudeProvider, CodexProvider
-from watchtower.tui.widgets.logo import TextLogo, build_logo, icon_path, images_available
+from watchtower_tui.providers import ClaudeProvider, CodexProvider
+from watchtower_tui.tui.widgets.logo import TextLogo, build_logo, icon_path, images_available
 
 
 class TestIconAssets:
@@ -26,35 +26,41 @@ class TestFallbacks:
 
     def test_image_style_falls_back_when_the_terminal_cannot_draw(self, monkeypatch):
         """Headless, or a terminal with no graphics protocol."""
-        monkeypatch.setattr("watchtower.tui.widgets.logo.terminal_supports_images", lambda: False)
+        monkeypatch.setattr(
+            "watchtower_tui.tui.widgets.logo.terminal_supports_images", lambda: False
+        )
         widget = build_logo(ClaudeProvider(), "image", "#d97757")
         assert isinstance(widget, TextLogo), "must fall back rather than render nothing"
 
     def test_image_is_the_default_style(self):
-        from watchtower.settings import Settings
+        from watchtower_tui.settings import Settings
 
         assert Settings().logo_style == "image"
 
     def test_legacy_style_names_are_migrated_not_rejected(self):
-        from watchtower.settings import Settings
+        from watchtower_tui.settings import Settings
 
         for old in ("braille", "blocks"):
             assert Settings.from_dict({"logo_style": old}).logo_style == "dots"
 
     def test_image_style_falls_back_without_the_optional_extra(self, monkeypatch):
-        monkeypatch.setattr("watchtower.tui.widgets.logo.images_available", lambda: False)
-        monkeypatch.setattr("watchtower.tui.widgets.logo.terminal_supports_images", lambda: False)
+        monkeypatch.setattr("watchtower_tui.tui.widgets.logo.images_available", lambda: False)
+        monkeypatch.setattr(
+            "watchtower_tui.tui.widgets.logo.terminal_supports_images", lambda: False
+        )
         assert isinstance(build_logo(CodexProvider(), "image", "#10a37f"), TextLogo)
 
     def test_a_provider_without_an_icon_still_gets_a_mark(self, monkeypatch):
-        monkeypatch.setattr("watchtower.tui.widgets.logo.terminal_supports_images", lambda: True)
-        monkeypatch.setattr("watchtower.tui.widgets.logo.icon_path", lambda _: None)
+        monkeypatch.setattr(
+            "watchtower_tui.tui.widgets.logo.terminal_supports_images", lambda: True
+        )
+        monkeypatch.setattr("watchtower_tui.tui.widgets.logo.icon_path", lambda _: None)
         assert isinstance(build_logo(ClaudeProvider(), "image", "#d97757"), TextLogo)
 
 
 def test_probing_never_raises():
     """Called at startup; an exception here would take the dashboard with it."""
-    from watchtower.tui.widgets.logo import terminal_supports_images
+    from watchtower_tui.tui.widgets.logo import terminal_supports_images
 
     assert isinstance(terminal_supports_images(), bool)
     assert isinstance(images_available(), bool)
@@ -78,7 +84,7 @@ class TestStyling:
     def test_the_stylesheet_targets_the_class_not_a_type(self):
         from pathlib import Path
 
-        css = (Path(__file__).parent.parent / "src/watchtower/tui/app.tcss").read_text(
+        css = (Path(__file__).parent.parent / "src/watchtower_tui/tui/app.tcss").read_text(
             encoding="utf-8"
         )
         assert ".account-card > .card-logo" in css
@@ -95,7 +101,7 @@ class TestSlotWidth:
     """
 
     def test_text_marks_are_five_cells(self):
-        from watchtower.tui.widgets.logo import LOGO_WIDTH, logo_slot_width
+        from watchtower_tui.tui.widgets.logo import LOGO_WIDTH, logo_slot_width
 
         assert logo_slot_width("braille") == LOGO_WIDTH
         assert logo_slot_width("blocks") == LOGO_WIDTH
@@ -103,7 +109,7 @@ class TestSlotWidth:
     def test_image_width_follows_the_cell_aspect(self, monkeypatch):
         from types import SimpleNamespace
 
-        import watchtower.tui.widgets.logo as logo_mod
+        import watchtower_tui.tui.widgets.logo as logo_mod
 
         def fake_cell_size(w, h):
             return lambda: SimpleNamespace(width=w, height=h)
@@ -123,7 +129,7 @@ class TestSlotWidth:
     def test_width_is_clamped_against_a_nonsense_cell_size(self, monkeypatch):
         from types import SimpleNamespace
 
-        import watchtower.tui.widgets.logo as logo_mod
+        import watchtower_tui.tui.widgets.logo as logo_mod
 
         monkeypatch.setattr(
             "textual_image._terminal.get_cell_size", lambda: SimpleNamespace(width=1, height=400)
@@ -131,7 +137,7 @@ class TestSlotWidth:
         assert 3 <= logo_mod.logo_slot_width("image") <= 10
 
     def test_falls_back_when_the_cell_size_is_unreadable(self, monkeypatch):
-        import watchtower.tui.widgets.logo as logo_mod
+        import watchtower_tui.tui.widgets.logo as logo_mod
 
         def boom():
             raise RuntimeError("no terminal")
@@ -142,8 +148,8 @@ class TestSlotWidth:
 
 def test_the_body_indents_by_the_real_slot_width():
     """Otherwise a six-cell icon overlaps the account name."""
-    from watchtower.settings import Settings
-    from watchtower.tui.widgets.account_card import CardBody
+    from watchtower_tui.settings import Settings
+    from watchtower_tui.tui.widgets.account_card import CardBody
 
     settings = Settings()
     body = CardBody(state=None, settings=settings, identity="", logo_width=7)

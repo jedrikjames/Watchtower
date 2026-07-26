@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import pytest
 
-from watchtower.errors import UsageUnavailable
-from watchtower.providers.claude import ClaudeProvider
-from watchtower.providers.codex import CodexProvider, _window_label
+from watchtower_tui.errors import UsageUnavailable
+from watchtower_tui.providers.claude import ClaudeProvider
+from watchtower_tui.providers.codex import CodexProvider, _window_label
 
 
 class TestClaude:

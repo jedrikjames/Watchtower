@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from watchtower.models import AuthMethod, Credential, UsageReport, UsageWindow
-from watchtower.providers.base import Identity, Provider, ProviderInfo
-from watchtower.secretstore.vault import FileVault
-from watchtower.service import AccountManager
-from watchtower.tui import WatchtowerApp
-from watchtower.tui.widgets import CardBody, KeyHints, StatusLine
+from watchtower_tui.models import AuthMethod, Credential, UsageReport, UsageWindow
+from watchtower_tui.providers.base import Identity, Provider, ProviderInfo
+from watchtower_tui.secretstore.vault import FileVault
+from watchtower_tui.service import AccountManager
+from watchtower_tui.tui import WatchtowerApp
+from watchtower_tui.tui.widgets import CardBody, KeyHints, StatusLine
 
-CSS = Path(__file__).parent.parent / "src/watchtower/tui/app.tcss"
+CSS = Path(__file__).parent.parent / "src/watchtower_tui/tui/app.tcss"
 
 
 class Stub(Provider):
@@ -30,7 +30,7 @@ class Stub(Provider):
 
 @pytest.fixture
 def stub():
-    import watchtower.providers as registry
+    import watchtower_tui.providers as registry
 
     registry._PROVIDERS["stub"] = Stub()
     yield
@@ -100,13 +100,13 @@ class TestKeyHints:
                 assert key in text and label in text
 
     def test_rename_remove_and_refresh_are_not_advertised(self):
-        from watchtower.tui.widgets.keyhints import HINTS
+        from watchtower_tui.tui.widgets.keyhints import HINTS
 
         shown = {label for _, label in HINTS}
         assert not shown & {"Rename", "Remove", "Refresh"}
 
     def test_the_keys_are_drawn_as_reversed_caps(self):
-        from watchtower.tui.widgets.keyhints import KeyHints as K
+        from watchtower_tui.tui.widgets.keyhints import KeyHints as K
 
         spans = K().render().spans
         assert any("on white" in str(span.style) for span in spans)
@@ -178,7 +178,7 @@ class TestReordering:
     """
 
     async def test_bracket_keys_reorder_cards(self, settings, stub):
-        from watchtower.tui.widgets import AccountCard
+        from watchtower_tui.tui.widgets import AccountCard
 
         app, manager = build(settings, count=3)
         async with app.run_test(size=(120, 20)) as pilot:

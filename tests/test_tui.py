@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import pytest
 
-import watchtower.providers as registry
-from watchtower.models import AccountStatus, AuthMethod, Credential, UsageReport, UsageWindow
-from watchtower.providers.base import Identity, Provider, ProviderInfo
-from watchtower.secretstore.vault import FileVault
-from watchtower.service import AccountManager
-from watchtower.tui import WatchtowerApp
-from watchtower.tui.widgets import AccountCard
+import watchtower_tui.providers as registry
+from watchtower_tui.models import AccountStatus, AuthMethod, Credential, UsageReport, UsageWindow
+from watchtower_tui.providers.base import Identity, Provider, ProviderInfo
+from watchtower_tui.secretstore.vault import FileVault
+from watchtower_tui.service import AccountManager
+from watchtower_tui.tui import WatchtowerApp
+from watchtower_tui.tui.widgets import AccountCard
 
 
 class StubProvider(Provider):
