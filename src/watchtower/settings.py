@@ -68,11 +68,12 @@ class Settings:
     #: Textual theme name.
     theme: str = "textual-dark"
 
-    #: How to draw the provider marks. "braille" traces them onto a dot grid
-    #: and works everywhere; "blocks" is the plainer box-drawing fallback;
-    #: "image" draws the real icons on terminals with Sixel or Kitty graphics
-    #: and needs the optional extra (pip install watchtower-tui[images]).
-    logo_style: str = "braille"
+    #: How to draw the provider marks. "image" draws the real icons on
+    #: terminals with Sixel or Kitty graphics and quietly falls back to
+    #: braille everywhere else, so it is the default and costs nothing when
+    #: unsupported. "braille" forces the dot-grid trace; "blocks" is the
+    #: plainer box-drawing version for fonts with no braille coverage.
+    logo_style: str = "image"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -81,8 +81,10 @@ class WatchtowerApp(App[None]):
         Binding("left,h,shift+tab", "focus_previous_card", "", show=False),
         Binding("down,j", "focus_next_card", "", show=False),
         Binding("up,k", "focus_previous_card", "", show=False),
-        Binding("bracketright", "move_card(1)", "", show=False),
-        Binding("bracketleft", "move_card(-1)", "", show=False),
+        # Textual calls these left_square_bracket / right_square_bracket.
+        # "bracketleft" looks plausible and silently never matches.
+        Binding("right_square_bracket", "move_card(1)", "", show=False),
+        Binding("left_square_bracket", "move_card(-1)", "", show=False),
     ]
 
     def __init__(self, settings: Settings, manager: AccountManager) -> None:

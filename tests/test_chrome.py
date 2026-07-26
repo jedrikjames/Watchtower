@@ -166,3 +166,41 @@ def test_layer_names_are_declared_on_the_screen():
     layers = screen[screen.index("layers:") + len("layers:") :].split(";")[0].split()
     assert "body" in layers and "mark" in layers
     assert layers.index("mark") > layers.index("body"), "mark must be drawn on top"
+
+
+class TestReordering:
+    """`[` and `]` move a card. These press the real characters.
+
+    The original bindings said "bracketleft"/"bracketright", which Textual
+    never emits - it calls them left_square_bracket and right_square_bracket.
+    The old test pressed the wrong name too, so it synthesised an event that
+    matched the wrong binding and passed while the feature was broken.
+    """
+
+    async def test_bracket_keys_reorder_cards(self, settings, stub):
+        from watchtower.tui.widgets import AccountCard
+
+        app, manager = build(settings, count=3)
+        async with app.run_test(size=(120, 20)) as pilot:
+            await boot(pilot, app)
+            labels = lambda: [  # noqa: E731
+                manager.get(c.account_id).account.label for c in app.query(AccountCard)
+            ]
+            assert labels() == ["A0", "A1", "A2"]
+
+            app.query(AccountCard).first().focus()
+            await pilot.pause(0.2)
+            await pilot.press("]")  # the actual key, not a made-up name
+            await pilot.pause(0.4)
+            assert labels() == ["A1", "A0", "A2"], "] should move the card right"
+
+            await pilot.press("[")
+            await pilot.pause(0.4)
+            assert labels() == ["A0", "A1", "A2"], "[ should move it back"
+
+    def test_the_bindings_use_textual_key_names(self):
+        from textual.keys import _character_to_key
+
+        bound = {b.key for b in WatchtowerApp.BINDINGS if "square" in b.key or "bracket" in b.key}
+        assert _character_to_key("[") in bound
+        assert _character_to_key("]") in bound
