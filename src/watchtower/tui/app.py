@@ -21,7 +21,7 @@ from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, ItemGrid, Vertical, VerticalScroll
-from textual.widgets import Footer, Static
+from textual.widgets import Static
 
 from ..errors import AuthCancelled, StorageError, VaultPassphraseError, WatchtowerError
 from ..logging_setup import get_logger
@@ -41,7 +41,7 @@ from .screens import (
     TextPrompt,
     UnlockScreen,
 )
-from .widgets import AccountCard, StatusLine
+from .widgets import AccountCard, KeyHints, StatusLine
 from .widgets.account_card import CardBody
 from .widgets.logo import probe_image_support
 
@@ -59,6 +59,10 @@ class WatchtowerApp(App[None]):
     TITLE = "Watchtower"
     SUB_TITLE = "AI account usage"
 
+    #: No ctrl+p command palette. It is Textual's, not ours, and it advertises
+    #: itself in the footer we have replaced.
+    ENABLE_COMMAND_PALETTE = False
+
     BINDINGS = [
         Binding("a", "add_account", "Add"),
         Binding("r", "refresh", "Refresh"),
@@ -69,6 +73,9 @@ class WatchtowerApp(App[None]):
         Binding("s", "settings", "Settings"),
         Binding("question_mark", "help", "Help", key_display="?"),
         Binding("q", "quit", "Quit"),
+        # Textual binds ctrl+q to quit by default. Rebinding it to nothing is
+        # the only way to take a base-class binding out of circulation.
+        Binding("ctrl+q", "noop", "", show=False, priority=True),
         # navigation
         Binding("right,l,tab", "focus_next_card", "", show=False),
         Binding("left,h,shift+tab", "focus_previous_card", "", show=False),
@@ -100,6 +107,7 @@ class WatchtowerApp(App[None]):
     def compose(self) -> ComposeResult:
         with Container(id="topbar"):
             yield StatusLine()
+            yield KeyHints()
         with VerticalScroll(id="board"):
             yield ItemGrid(id="cards", min_column_width=MIN_CARD_WIDTH)
             with Vertical(id="empty"):
@@ -111,7 +119,6 @@ class WatchtowerApp(App[None]):
                     classes="empty-body",
                 )
                 yield Static("press [b]a[/b] to add an account", classes="empty-hint")
-        yield Footer()
 
     def on_mount(self) -> None:
         self._apply_theme()
@@ -130,6 +137,33 @@ class WatchtowerApp(App[None]):
             return
         for body in self.query(CardBody):
             body.refresh()
+
+    def action_noop(self) -> None:
+        """Target for bindings that exist purely to disable a default."""
+
+    def notify(  # type: ignore[override]
+        self,
+        message: str,
+        *,
+        title: str = "",
+        severity: str = "information",
+        timeout: float | None = None,
+        markup: bool = True,
+    ) -> None:
+        """Route messages to the status line instead of a toast.
+
+        Toasts are disabled, but errors still have to reach the user, so this
+        replaces the mechanism rather than removing it. Full detail goes to the
+        log; the line gets a sentence.
+        """
+        error = severity in ("error", "warning")
+        log.info("notice (%s): %s", severity, message)
+        try:
+            status = self.query_one(StatusLine)
+        except Exception:  # pragma: no cover - before mount or during teardown
+            return
+        status.flash(message, error=error)
+        self.set_timer(8.0 if error else 4.0, status.clear_flash)
 
     def _modal_open(self) -> bool:
         """True when something is already on top of the dashboard."""
@@ -249,22 +283,22 @@ class WatchtowerApp(App[None]):
         await self._sync_cards()
 
     def _tick(self) -> None:
-        """Once a second: keep the relative times honest.
+        """Once a second, and only the status line.
 
-        Values are pulled from the scheduler on every tick rather than cached
-        from the last refresh, so the countdown cannot drift out of step with
-        the loop that actually owns it.
+        The cards are deliberately left alone. Repainting a card redraws its
+        mark, and re-emitting a Sixel image at 1Hz flickers. Card bodies are
+        refreshed when the usage actually changes instead, which is the only
+        time they have anything new to say.
+
+        Scheduler values are read fresh every tick rather than cached from the
+        last refresh, so the countdown cannot drift out of step with the loop
+        that owns it.
         """
         try:
             self._update_status()
             self.query_one(StatusLine).tick()
         except Exception:  # pragma: no cover - during teardown
             return
-        # Only the body, never the whole card. Refreshing the card would
-        # redraw its logo too, and re-emitting a Sixel image once a second is
-        # visible as flicker. The mark never changes, so it never needs it.
-        for body in self.query(CardBody):
-            body.refresh()
 
     def _update_status(self) -> None:
         try:
